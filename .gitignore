@@ -1,0 +1,6 @@
+*.pdf
+*.out
+*.o
+main
+main.exe
+*.pre
