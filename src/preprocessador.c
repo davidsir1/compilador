@@ -35,4 +35,6 @@ int preprocessar(const char *arquivo_entrada, const char *arquivo_saida) {
 
     fclose(entrada);
     fclose(saida);
+
+    return 0
 }
