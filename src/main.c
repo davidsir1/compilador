@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "preprocessador.h"
 
 int main (int argc, char* argv[]) {
 
@@ -12,13 +13,7 @@ int main (int argc, char* argv[]) {
 
     // Formato de entrada: ./main.exe <arquivo_entrada.asm> <arquivo_saida.pre>
 
-    FILE* arquivo_entrada = fopen(argv[1], "r");
-    FILE* arquivo_saida = fopen(argv[2], "w");
-
-
-
-    fclose(arquivo_entrada);
-    fclose(arquivo_saida);
+    int res = preprocessar(argv[1], argv[2]);
 
     return 0;
 }
