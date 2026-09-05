@@ -8,6 +8,6 @@ int preprocessar(const char* arquivo_entrada, const char* arquivo_saida);
 
 char* remover_comentarios(char *linha);
 
-int verificar_linhas_vazias(char* linha);
+char* normalizar_linha(char* linha);
 
 #endif // PROCESSADOR_H

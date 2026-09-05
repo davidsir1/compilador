@@ -28,7 +28,10 @@ int preprocessar(const char *arquivo_entrada, const char *arquivo_saida) {
         // 1. Remoção dos comentários
         remover_comentarios(linha);
 
-        // 2. Remoção de linhas vazias
+        // 2. Normalização de espaços e tabulações
+        normalizar_linha(linha);
+
+        // 3. Verificação de linhas vazias
         int vazia = 1;
 
         for (int i = 0; linha[i] != '\0'; i++) {
@@ -42,14 +45,12 @@ int preprocessar(const char *arquivo_entrada, const char *arquivo_saida) {
             continue;
         }
 
-        // 3. Normalização de espaços e tabulações
-
         // 4. Após executar o pre processamento, escrever no arquivo de saída
         if (linha[0] != '\0') {
-            fprintf(saida, "%s\n", linha);
+            fprintf(saida, "%s", linha);
         }
 
-        printf("%s", linha); // Temporário
+        //printf("%s", linha); // Temporário
     }
 
     fclose(entrada);
@@ -80,6 +81,83 @@ char* remover_comentarios(char *linha)
     }
 
     // Adicionar a quebra de linha no final
+
+    return linha;
+}
+
+char* normalizar_linha(char *linha)
+{
+    int i = 0;
+    int j = 0;
+    int dentro_string = 0;
+    int espaco_pendente = 0;
+
+    while (linha[i] != '\0') {
+
+        /* Dentro de uma string, preserva os caracteres */
+        if (dentro_string) {
+            linha[j++] = linha[i];
+
+            if (linha[i] == '"' && (i == 0 || linha[i - 1] != '\\')) {
+                dentro_string = 0;
+            }
+
+            i++;
+            continue;
+        }
+
+        /* Início de uma string */
+        if (linha[i] == '"') {
+
+            /* Coloca o espaço que estava pendente antes da string */
+            if (espaco_pendente && j > 0) {
+                linha[j++] = ' ';
+            }
+
+            linha[j++] = linha[i];
+            dentro_string = 1;
+            espaco_pendente = 0;
+            i++;
+            continue;
+        }
+
+        /* Tabulação vira espaço */
+        if (linha[i] == '\t') {
+            espaco_pendente = 1;
+            i++;
+            continue;
+        }
+
+        /* Vários espaços viram apenas um */
+        if (linha[i] == ' ') {
+            espaco_pendente = 1;
+            i++;
+            continue;
+        }
+
+        /* Ignora quebras de linha */
+        if (linha[i] == '\n' || linha[i] == '\r') {
+            i++;
+            continue;
+        }
+
+        /* Adiciona um único espaço entre elementos */
+        if (espaco_pendente && j > 0) {
+            linha[j++] = ' ';
+        }
+
+        linha[j++] = linha[i];
+        espaco_pendente = 0;
+        i++;
+    }
+
+    /* Remove espaço no final */
+    if (j > 0 && linha[j - 1] == ' ') {
+        j--;
+    }
+
+    linha[j++] = '\n';
+    linha[j] = '\0';
 
     return linha;
 }
