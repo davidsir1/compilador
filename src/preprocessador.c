@@ -26,10 +26,16 @@ int preprocessar(const char *arquivo_entrada, const char *arquivo_saida) {
          * espaços e tabulações
          */
         // 1. Remoção dos comentários
-
+        remover_comentarios(linha);
         // 2. Remoção de linha vazias
 
         // 3. Normalização de espaços e tabulações
+
+        // 4. Após executar o pre processamento, escrever no arquivo de saída
+        if (linha[0] != '\0') {
+            fprintf(saida, "%s\n", linha);
+        }
+
         printf("%s", linha); // Temporário
     }
 
@@ -37,4 +43,30 @@ int preprocessar(const char *arquivo_entrada, const char *arquivo_saida) {
     fclose(saida);
 
     return 0;
+}
+
+char* remover_comentarios(char *linha)
+{
+    int dentro_de_string = 0;
+    int barra_invertida = 0;
+    int i;
+
+    if (linha == 0) {
+        return NULL;
+    }
+
+    for (i = 0; linha[i] != '\0'; i++) {
+        if (linha[i] == '"' && (i == 0 || linha[i-1] != '\\')) {
+            dentro_de_string = !dentro_de_string;
+        }
+
+        if (linha[i] == '#' && !dentro_de_string) {
+            linha[i] = '\0';
+            return linha;
+        }
+    }
+
+    // Adicionar a quebra de linha no final
+
+    return linha;
 }
