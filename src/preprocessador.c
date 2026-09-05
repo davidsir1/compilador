@@ -27,7 +27,20 @@ int preprocessar(const char *arquivo_entrada, const char *arquivo_saida) {
          */
         // 1. Remoção dos comentários
         remover_comentarios(linha);
-        // 2. Remoção de linha vazias
+
+        // 2. Remoção de linhas vazias
+        int vazia = 1;
+
+        for (int i = 0; linha[i] != '\0'; i++) {
+            if (linha[i] != ' ' && linha[i] != '\t' && linha[i] != '\n') {
+                vazia = 0;
+                break;
+            }
+        }
+
+        if (vazia) {
+            continue;
+        }
 
         // 3. Normalização de espaços e tabulações
 
