@@ -29,7 +29,7 @@ void AnaliseLexica(FILE* in, FILE* out);
 // Funções auxiliares
 void inicializar_tabela(TabelaSimbolos* ts);
 
-void buscar_simbolo(TabelaSimbolos* ts, const char* lexema);
+int buscar_simbolo(TabelaSimbolos* ts, const char* lexema);
 
 int inserir_simbolo(TabelaSimbolos* ts, const char* lexema, const char* categoria, int linha, int coluna);
 

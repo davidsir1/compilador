@@ -1,4 +1,5 @@
 #include "lexico.h"
+#include <string.h>
 #include <stdio.h>
 
 // Tabelas auxiliares
@@ -51,6 +52,17 @@ void inicializar_tabela(TabelaSimbolos* ts) {
     for (int i = 0; i < sizeof(REGISTRADORES)/sizeof(REGISTRADORES[0]); i++) {
         inserir_simbolo(ts, REGISTRADORES[i], "registrador", 0, 0);
     }
+}
+
+int buscar_simbolo(TabelaSimbolos *ts, const char *lexema) {
+    if (ts == NULL || lexema == NULL) return -1;
+
+    for (int i = 0; i < ts->total; i++) {
+        if (strcmp(ts->entradas[i].lexema, lexema) == 0)
+            return i;
+    }
+
+    return -1; // Caso ele não encontre o simbolo
 }
 
 void AnaliseLexica(FILE *in, FILE *out) {
