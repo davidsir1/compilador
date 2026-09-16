@@ -11,9 +11,11 @@ int main (int argc, char* argv[]) {
         return 1;
     }
 
-    // Formato de entrada: ./main.exe <arquivo_entrada.asm> <arquivo_saida.pre>
+    // Formato de entrada: ./main.exe <arquivo_entrada.asm> <arquivo_saida.lex>
 
     int res = preprocessar(argv[1], argv[2]);
+
+    // Chamar a função de analiselexica
 
     return 0;
 }
