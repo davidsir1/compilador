@@ -34,6 +34,25 @@ static const char* REGISTRADORES[] = {
     "$30", "$31"
 };
 
+void inicializar_tabela(TabelaSimbolos* ts) {
+    if (ts == NULL) return;
+
+    ts->total = 0;
+
+    // Diretivas
+    for (int i = 0; i < sizeof(DIRETIVAS)/sizeof(DIRETIVAS[0]); i++) {
+        inserir_simbolo(ts, DIRETIVAS[i], "diretiva", 0, 0);
+    }
+    // Instruções
+    for (int i = 0; i < sizeof(INSTRUCOES)/sizeof(INSTRUCOES[0]); i++) {
+        inserir_simbolo(ts, INSTRUCOES[i], "instrucao", 0, 0);
+    }
+    // Registradores
+    for (int i = 0; i < sizeof(REGISTRADORES)/sizeof(REGISTRADORES[0]); i++) {
+        inserir_simbolo(ts, REGISTRADORES[i], "registrador", 0, 0);
+    }
+}
+
 void AnaliseLexica(FILE *in, FILE *out) {
     TabelaSimbolos ts;
     // Inicializar tabela

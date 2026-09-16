@@ -27,7 +27,7 @@ typedef struct {
 void AnaliseLexica(FILE* in, FILE* out);
 
 // Funções auxiliares
-void inicializar_simbolo(TabelaSimbolos* ts, const char *lexema);
+void inicializar_tabela(TabelaSimbolos* ts);
 
 void buscar_simbolo(TabelaSimbolos* ts, const char* lexema);
 
