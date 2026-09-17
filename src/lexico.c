@@ -1,6 +1,7 @@
 #include "lexico.h"
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 // Tabelas auxiliares
 
@@ -108,6 +109,28 @@ void imprimir_tabela(TabelaSimbolos *ts, FILE *saida) {
     }
 }
 
+/*
+ * Reconhecimento de identificadores, instruções e diretivas
+ */
+void converter_minusculas(const char *origem, char *destino) {
+    int i;
+    for (i = 0; origem[i] != '\0'; i++) {
+        destino[i] = (char)tolower(origem[i]);
+    }
+    destino[i] = '\0';
+}
+
+void converter_maiusculas(const char *origem, char *destino) {
+    int i;
+    for (i = 0; origem[i] != '\0'; i++) {
+        destino[i] = (char)toupper(origem[i]);
+    }
+    destino[i] = '\0';
+}
+
+/*
+ * Função principal para Analise Lexica
+ */
 void AnaliseLexica(FILE *in, FILE *out) {
     TabelaSimbolos ts;
     // Inicializar tabela
