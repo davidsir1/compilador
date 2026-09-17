@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "preprocessador.h"
+#include "lexico.h"
 
 int main (int argc, char* argv[]) {
 
