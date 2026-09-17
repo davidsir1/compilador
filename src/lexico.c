@@ -35,6 +35,8 @@ static const char* REGISTRADORES[] = {
     "$30", "$31"
 };
 
+// Funções
+
 void inicializar_tabela(TabelaSimbolos* ts) {
     if (ts == NULL) return;
 
@@ -63,6 +65,47 @@ int buscar_simbolo(TabelaSimbolos *ts, const char *lexema) {
     }
 
     return -1; // Caso ele não encontre o simbolo
+}
+
+int inserir_simbolo(TabelaSimbolos *ts, const char *lexema, const char *categoria, int linha, int coluna) {
+    if (ts == NULL || lexema == NULL || categoria == NULL) return -1;
+
+    int indice = buscar_simbolo(ts, lexema);
+
+    if (indice >= 0) {
+        if (ts->entradas[indice].primeiraLinha == 0 &&
+        ts->entradas[indice].primeiraColuna == 0 &&
+        linha > 0 && coluna > 0) {
+            ts->entradas[indice].primeiraLinha = linha;
+            ts->entradas[indice].primeiraColuna = coluna;
+        }
+        return 0; // Já inseriu
+    }
+
+    // Verifica se o total de simbolos da tabela ultrapassou o limite definido
+    if (ts->total >= MAX_SIMBOLOS) return -1;
+
+    Simbolo* nova = &ts->entradas[ts->total];
+    strncpy(nova->lexema, lexema, 100);
+    nova->lexema[99] = '\0';
+    strncpy(nova->categoria, categoria, 30);
+    nova->categoria[29] = '\0';
+    nova->primeiraLinha = linha;
+    nova->primeiraColuna = coluna;
+
+    ts->total++;
+    return 1;
+}
+
+void imprimir_tabela(TabelaSimbolos *ts, FILE *saida) {
+    if (ts == NULL || saida == NULL) return;
+
+    fprintf(saida, "LEXEMA,CATEGORIA,LINHA,LINHA,COLUNA\n");
+
+    for (int i = 0; i < ts->total; i++) {
+        Simbolo* s = &ts->entradas[i];
+        fprintf(saida, "%s,%s,%d,%d\n", s->lexema, s->categoria, s->primeiraLinha, s->primeiraColuna);
+    }
 }
 
 void AnaliseLexica(FILE *in, FILE *out) {
