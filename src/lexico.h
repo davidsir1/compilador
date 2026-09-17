@@ -58,11 +58,10 @@ Token reconhecer_diretiva(FILE* in, int linha, int coluna, int primeiro_c, Tabel
  */
 Token reconhecer_registrador(FILE* in, int linha, int coluna, int primeiro_c, TabelaSimbolos* ts);
 
-/* Funções para normalização do texto */
-// Converter conteúdo da string para minusculo
+/* Converter conteúdo da string para minusculo */
 void converter_minusculas(const char* origem, char* destino);
 
-// Converter conteúdo da string para maiusculo
+/* Converter conteúdo da string para maiusculo */
 void converter_maiusculas(const char* origem, char* destino);
 
 #endif // LEXICO_H

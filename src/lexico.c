@@ -109,9 +109,6 @@ void imprimir_tabela(TabelaSimbolos *ts, FILE *saida) {
     }
 }
 
-/*
- * Reconhecimento de identificadores, instruções e diretivas
- */
 void converter_minusculas(const char *origem, char *destino) {
     int i;
     for (i = 0; origem[i] != '\0'; i++) {
@@ -126,6 +123,21 @@ void converter_maiusculas(const char *origem, char *destino) {
         destino[i] = (char)toupper(origem[i]);
     }
     destino[i] = '\0';
+}
+
+Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_c, TabelaSimbolos *ts) {
+    Token tk;
+    return tk;
+}
+
+Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_c, TabelaSimbolos *ts) {
+    Token tk;
+    return tk;
+}
+
+Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int primeiro_c, TabelaSimbolos *ts) {
+    Token tk;
+    return tk;
 }
 
 /*
