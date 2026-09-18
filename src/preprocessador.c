@@ -3,7 +3,6 @@
 
 void PreProcessamento(FILE *arquivo_entrada, FILE *arquivo_saida) {
     char linha[1024]; // ler a linha da entrada
-    char* linha_processada; // processar linha da entrada e escrever na saida
 
     while (fgets(linha, sizeof(linha), arquivo_entrada)) {
         // Processar a linha
@@ -44,7 +43,6 @@ void PreProcessamento(FILE *arquivo_entrada, FILE *arquivo_saida) {
 char* remover_comentarios(char *linha)
 {
     int dentro_de_string = 0;
-    int barra_invertida = 0;
     int i;
 
     if (linha == 0) {
@@ -61,8 +59,6 @@ char* remover_comentarios(char *linha)
             return linha;
         }
     }
-
-    // Adicionar a quebra de linha no final
 
     return linha;
 }
