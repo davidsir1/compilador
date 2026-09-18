@@ -1,10 +1,12 @@
 #ifndef PROCESSADOR_H
 #define PROCESSADOR_H
 
+#include <stdio.h>
+
 #define VAZIA 1
 #define NAO_VAZIA 0
 
-int preprocessar(const char* arquivo_entrada, const char* arquivo_saida);
+void PreProcessamento(FILE* arquivo_entrada, FILE* arquivo_saida);
 
 char* remover_comentarios(char *linha);
 
