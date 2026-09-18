@@ -34,7 +34,7 @@ void PreProcessamento(FILE *arquivo_entrada, FILE *arquivo_saida) {
 
         // 4. Após executar o pre processamento, escrever no arquivo de saída
         if (linha[0] != '\0') {
-            fprintf(arquivo_saida, "%s", linha);
+            fprintf(arquivo_saida, "%s\n", linha);
         }
 
         //printf("%s", linha); // Temporário
@@ -138,7 +138,6 @@ char* normalizar_linha(char *linha)
         j--;
     }
 
-    linha[j++] = '\n';
     linha[j] = '\0';
 
     return linha;
