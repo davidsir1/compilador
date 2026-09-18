@@ -125,17 +125,17 @@ void converter_maiusculas(const char *origem, char *destino) {
     destino[i] = '\0';
 }
 
-Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_c, TabelaSimbolos *ts) {
+Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
     Token tk;
     return tk;
 }
 
-Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_c, TabelaSimbolos *ts) {
+Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
     Token tk;
     return tk;
 }
 
-Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int primeiro_c, TabelaSimbolos *ts) {
+Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
     Token tk;
     return tk;
 }

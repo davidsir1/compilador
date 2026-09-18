@@ -44,19 +44,19 @@ void imprimir_tabela(TabelaSimbolos* ts, FILE* saida);
  * Se for rótulo (seguido de ':'), insere automaticamente na Tabela de Simbolos. Caso ocorra um erro,
  * ele retorna ERRO_INDETIFICADOR_INVALIDO ou ERRO_INSTRUCAO_INVALIDA
  */
-Token reconhecer_identificador_ou_instrucao(FILE* in, int linha, int coluna, int primeiro_c, TabelaSimbolos* ts);
+Token reconhecer_identificador_ou_instrucao(FILE* in, int linha, int coluna, int primeiro_char, TabelaSimbolos* ts);
 
 /*
  * Reconhece uma diretiva (estado q2)
  * Recebe o '.' já lido. Devolve Token DIR_<NOME> ou ERRO_DIRETIVA_INVALIDA
  */
-Token reconhecer_diretiva(FILE* in, int linha, int coluna, int primeiro_c, TabelaSimbolos* ts);
+Token reconhecer_diretiva(FILE* in, int linha, int coluna, int primeiro_char, TabelaSimbolos* ts);
 
 /*
  * Reconhece um registrador (estado q3)
  * Recebe '$' já lido. Devolte Token REG ou ERRO_REGISTRADOR_INVALIDO
  */
-Token reconhecer_registrador(FILE* in, int linha, int coluna, int primeiro_c, TabelaSimbolos* ts);
+Token reconhecer_registrador(FILE* in, int linha, int coluna, int primeiro_char, TabelaSimbolos* ts);
 
 /* Converter conteúdo da string para minusculo */
 void converter_minusculas(const char* origem, char* destino);
