@@ -4,19 +4,37 @@
 
 int main (int argc, char* argv[]) {
 
+    // Formato de entrada: ./main.exe <arquivo_entrada.asm> <arquivo_saida.lex>
+    // Para caso de sucesso, o argc deve ser igual à 3.
     if (argc == 1) {
         printf("Alerta: Voce nao passou argumentos.\n");
+        return 1;
+    } else if (argc == 2) {
+        printf("Erro: Voce nao passou o arquivo de saida.\n");
         return 1;
     } else if (argc >= 4) {
         printf("Erro: limite de argumentos ultrapassado.\n");
         return 1;
     }
 
-    // Formato de entrada: ./main.exe <arquivo_entrada.asm> <arquivo_saida.lex>
+    FILE* entrada = fopen(argv[1], "r");
+    FILE* saida = fopen(argv[2], "w");
 
-    int res = preprocessar(argv[1], argv[2]);
+    if (entrada == NULL) {
+        printf("Erro: falha em ler o arquivo %s.", argv[1]);
+        return 1;
+    }
+
+    if (saida == NULL) {
+        printf("Erro: falha na escrita do arquivo %s.", argv[2]);
+        fclose(saida);
+        return 1;
+    }
+
+    PreProcessamento(entrada, saida); // Mudar a saida para o <arquivo_saida.pre>
 
     // Chamar a função de analiselexica
+    //AnaliseLexica(FILE *in, FILE *out);
 
     return 0;
 }

@@ -1,24 +1,10 @@
-#include <stdio.h>
 #include "preprocessador.h"
+#include <stdio.h>
 
-
-int preprocessar(const char *arquivo_entrada, const char *arquivo_saida) {
-    FILE* entrada = fopen(arquivo_entrada, "r");
-    if (!entrada) {
-        printf("Erro: falha em ler o arquivo de entrada %s.", arquivo_entrada);
-        return -1;
-    }
-
-    FILE* saida = fopen(arquivo_saida, "w");
-    if (!saida) {
-        printf("Erro: falha em escrever o arquivo de saida %s.", arquivo_saida);
-        return -1;
-    }
-
+void PreProcessamento(FILE *arquivo_entrada, FILE *arquivo_saida) {
     char linha[1024]; // ler a linha da entrada
-    char* linha_processada; // processar linha da entrada e escrever na saida
 
-    while (fgets(linha, sizeof(linha), entrada)) {
+    while (fgets(linha, sizeof(linha), arquivo_entrada)) {
         // Processar a linha
         /*
          * As funções devem estar abaixo dos comentários respectivos;
@@ -47,22 +33,16 @@ int preprocessar(const char *arquivo_entrada, const char *arquivo_saida) {
 
         // 4. Após executar o pre processamento, escrever no arquivo de saída
         if (linha[0] != '\0') {
-            fprintf(saida, "%s", linha);
+            fprintf(arquivo_saida, "%s\n", linha);
         }
 
         //printf("%s", linha); // Temporário
     }
-
-    fclose(entrada);
-    fclose(saida);
-
-    return 0;
 }
 
 char* remover_comentarios(char *linha)
 {
     int dentro_de_string = 0;
-    int barra_invertida = 0;
     int i;
 
     if (linha == 0) {
@@ -79,8 +59,6 @@ char* remover_comentarios(char *linha)
             return linha;
         }
     }
-
-    // Adicionar a quebra de linha no final
 
     return linha;
 }
@@ -156,7 +134,6 @@ char* normalizar_linha(char *linha)
         j--;
     }
 
-    linha[j++] = '\n';
     linha[j] = '\0';
 
     return linha;
