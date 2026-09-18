@@ -20,6 +20,17 @@ int main (int argc, char* argv[]) {
     FILE* entrada = fopen(argv[1], "r");
     FILE* saida = fopen(argv[2], "w");
 
+    if (entrada == NULL) {
+        printf("Erro: falha em ler o arquivo %s.", argv[1]);
+        return 1;
+    }
+
+    if (saida == NULL) {
+        printf("Erro: falha na escrita do arquivo %s.", argv[2]);
+        fclose(saida);
+        return 1;
+    }
+
     PreProcessamento(entrada, saida); // Mudar a saida para o <arquivo_saida.pre>
 
     // Chamar a função de analiselexica
