@@ -18,15 +18,15 @@ int main (int argc, char* argv[]) {
     }
 
     FILE* entrada = fopen(argv[1], "r");
-    FILE* saida = fopen(argv[2], "w");
+    FILE* saida = fopen("arquivo_saida.pre", "w");
 
     if (entrada == NULL) {
-        printf("Erro: falha em ler o arquivo %s.", argv[1]);
+        printf("Erro: falha em ler o arquivo %s\n.", argv[1]);
         return 1;
     }
 
     if (saida == NULL) {
-        printf("Erro: falha na escrita do arquivo %s.", argv[2]);
+        printf("Erro: falha na escrita do arquivo %s.\n", argv[2]);
         fclose(saida);
         return 1;
     }
