@@ -125,6 +125,17 @@ void converter_maiusculas(const char *origem, char *destino) {
     destino[i] = '\0';
 }
 
+static Token montar_token(const char* nome, const char* lexema, int linha, int coluna) {
+    Token tk;
+    strncpy(tk.nome, nome, 49);
+    tk.nome[49] = '\0';
+    strncpy(tk.lexema, lexema, 99);
+    tk.lexema[99] = '\0';
+    tk.linha = linha;
+    tk.coluna = coluna;
+    return tk;
+}
+
 Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
     Token tk;
     return tk;
@@ -136,6 +147,26 @@ Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char,
 }
 
 Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
+    Token tk;
+    return tk;
+}
+
+Token reconhecer_numero(FILE *in, int linha, int coluna, int primeiro_char) {
+    Token tk;
+    return tk;
+}
+
+Token reconhecer_negativo(FILE *in, int linha, int coluna, int primeiro_char) {
+    Token tk;
+    return tk;
+}
+
+Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
+    Token tk;
+    return tk;
+}
+
+Token reconhecer_simbolo(int caracter, int linha, int coluna) {
     Token tk;
     return tk;
 }

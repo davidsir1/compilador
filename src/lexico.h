@@ -58,6 +58,29 @@ Token reconhecer_diretiva(FILE* in, int linha, int coluna, int primeiro_char, Ta
  */
 Token reconhecer_registrador(FILE* in, int linha, int coluna, int primeiro_char, TabelaSimbolos* ts);
 
+/*
+ * Reconhece números decimais, hexadecimal e também negativos com a função reconhecer_negativo()
+ * Recebe o primeiro digito já lido e devolve Token NUM_INT ou ERRO_NUMERO_INFORMADO.
+ */
+Token reconhecer_numero(FILE* in, int linha, int coluna, int primeiro_char);
+
+/*
+ * Reconhece número negativo (). Recebe o '-' já lido e devolve Token NUM_IN ou ERRO_CARACTERE_INVALIDO
+ */
+Token reconhecer_negativo(FILE* in, int linha, int coluna, int primeiro_char);
+
+/*
+ * Reconhece uma string delimitada por asapas ().
+ * Recebe a '"' inicial e devolve Token STRING, ERRO_STRING_NAO_FECHADA ou ERRO_ESCAPE_INVALIDO
+ */
+Token reconhecer_string(FILE* in, int linha, int coluna, int primeiro_char);
+
+/*
+ * Monta um Token para um símbolo de um único caractere.
+ * (',' ':' '(' ')')
+ */
+Token reconhecer_simbolo(int caracter, int linha, int coluna);
+
 /* Converter conteúdo da string para minusculo */
 void converter_minusculas(const char* origem, char* destino);
 
