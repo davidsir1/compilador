@@ -5,5 +5,4 @@ main
 main.exe
 *.pre
 *.sh
-*.dot
 notes/

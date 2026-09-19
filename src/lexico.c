@@ -1,6 +1,7 @@
 #include "lexico.h"
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 // Tabelas auxiliares
 
@@ -108,20 +109,49 @@ void imprimir_tabela(TabelaSimbolos *ts, FILE *saida) {
     }
 }
 
+void converter_minusculas(const char *origem, char *destino) {
+    int i;
+    for (i = 0; origem[i] != '\0'; i++) {
+        destino[i] = (char)tolower(origem[i]);
+    }
+    destino[i] = '\0';
+}
+
+void converter_maiusculas(const char *origem, char *destino) {
+    int i;
+    for (i = 0; origem[i] != '\0'; i++) {
+        destino[i] = (char)toupper(origem[i]);
+    }
+    destino[i] = '\0';
+}
+
+Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
+    Token tk;
+    return tk;
+}
+
+Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
+    Token tk;
+    return tk;
+}
+
+Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
+    Token tk;
+    return tk;
+}
+
+/*
+ * Função principal para Analise Lexica
+ */
 void AnaliseLexica(FILE *in, FILE *out) {
     TabelaSimbolos ts;
     // Inicializar tabela
-
-    FILE* out_ts = fopen("saida.ts", "w");
-    FILE* out_err = fopen("saida.err", "w");
+    inicializar_tabela(&ts);
 
     int linha = 1, coluna = 1;
-    int c;
+    int letra;
 
-    while ((c = fgetc(in)) != '\0') {
+    while ((letra = fgetc(in)) != '\0') {
 
     }
-
-    fclose(out_ts);
-    fclose(out_err);
 }
