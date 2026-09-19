@@ -146,17 +146,12 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
 void AnaliseLexica(FILE *in, FILE *out) {
     TabelaSimbolos ts;
     // Inicializar tabela
-
-    FILE* out_ts = fopen("saida.ts", "w");
-    FILE* out_err = fopen("saida.err", "w");
+    inicializar_tabela(&ts);
 
     int linha = 1, coluna = 1;
-    int c;
+    int letra;
 
-    while ((c = fgetc(in)) != '\0') {
+    while ((letra = fgetc(in)) != '\0') {
 
     }
-
-    fclose(out_ts);
-    fclose(out_err);
 }
