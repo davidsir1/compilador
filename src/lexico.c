@@ -26,7 +26,7 @@ static const char* REGISTRADORES[] = {
     "$v0", "$v1",
     "$a0", "$a1", "$a2", "$a3",
     "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$t8", "$t9",
-    "$s0", "$s1", "$s2", "$s3", "$s5", "$s6", "$s7",
+    "$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7",
     "$k0", "$k1",
     "$gp", "$sp", "$fp", "$ra",
     // Formas númericas
@@ -101,7 +101,7 @@ int inserir_simbolo(TabelaSimbolos *ts, const char *lexema, const char *categori
 void imprimir_tabela(TabelaSimbolos *ts, FILE *saida) {
     if (ts == NULL || saida == NULL) return;
 
-    fprintf(saida, "LEXEMA,CATEGORIA,LINHA,LINHA,COLUNA\n");
+    fprintf(saida, "LEXEMA,CATEGORIA,LINHA,COLUNA\n");
 
     for (int i = 0; i < ts->total; i++) {
         Simbolo* s = &ts->entradas[i];
@@ -182,7 +182,7 @@ void AnaliseLexica(FILE *in, FILE *out) {
     int linha = 1, coluna = 1;
     int letra;
 
-    while ((letra = fgetc(in)) != '\0') {
+    while ((letra = fgetc(in)) != EOF) {
 
     }
 }
