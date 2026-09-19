@@ -3,33 +3,112 @@
 	<automaton>
 		<!--The list of states.-->
 		<state id="0" name="q0">
-			<x>108.0</x>
-			<y>144.0</y>
+			<x>85.0</x>
+			<y>108.0</y>
+			<initial/>
 		</state>
 		<state id="1" name="q1">
-			<x>223.0</x>
-			<y>78.0</y>
+			<x>252.0</x>
+			<y>65.0</y>
 			<final/>
 		</state>
 		<state id="2" name="q2">
-			<x>297.0</x>
-			<y>100.0</y>
+			<x>336.0</x>
+			<y>97.0</y>
 			<final/>
 		</state>
 		<state id="3" name="q3">
-			<x>358.0</x>
-			<y>153.0</y>
+			<x>411.0</x>
+			<y>142.0</y>
+			<final/>
+		</state>
+		<state id="4" name="q4">
+			<x>241.0</x>
+			<y>238.0</y>
+		</state>
+		<state id="5" name="q5">
+			<x>428.0</x>
+			<y>225.0</y>
+			<final/>
+		</state>
+		<state id="6" name="q6">
+			<x>542.0</x>
+			<y>220.0</y>
+		</state>
+		<state id="7" name="q7">
+			<x>690.0</x>
+			<y>221.0</y>
+			<final/>
+		</state>
+		<state id="8" name="q8">
+			<x>300.0</x>
+			<y>334.0</y>
+			<final/>
+		</state>
+		<state id="9" name="q9">
+			<x>159.0</x>
+			<y>400.0</y>
+		</state>
+		<state id="10" name="q10">
+			<x>315.0</x>
+			<y>451.0</y>
+		</state>
+		<state id="11" name="q11">
+			<x>478.0</x>
+			<y>409.0</y>
+			<final/>
+		</state>
+		<state id="12" name="q12">
+			<x>714.0</x>
+			<y>327.0</y>
 		</state>
 		<!--The list of transitions.-->
 		<transition>
-			<from>0</from>
-			<to>2</to>
-			<read>.</read>
+			<from>10</from>
+			<to>10</to>
+			<read>n, t, ", \, 0</read>
+		</transition>
+		<transition>
+			<from>8</from>
+			<to>8</to>
+			<read>letra, digito, simbolo</read>
+		</transition>
+		<transition>
+			<from>9</from>
+			<to>9</to>
+			<read>letra, digito, simbolo</read>
+		</transition>
+		<transition>
+			<from>9</from>
+			<to>11</to>
+			<controlx>317</controlx>
+			<controly>361</controly>
+			<read>fecha string </read>
 		</transition>
 		<transition>
 			<from>0</from>
-			<to>1</to>
-			<read>letra, '_'</read>
+			<to>2</to>
+			<read>ponto '.'</read>
+		</transition>
+		<transition>
+			<from>7</from>
+			<to>7</to>
+			<read>digito, letra</read>
+		</transition>
+		<transition>
+			<from>4</from>
+			<to>5</to>
+			<read>digito decimal</read>
+		</transition>
+		<transition>
+			<from>4</from>
+			<to>12</to>
+			<read>não é digito</read>
+		</transition>
+		<transition>
+			<from>3</from>
+			<to>3</to>
+			<read>letra, digito</read>
 		</transition>
 		<transition>
 			<from>2</from>
@@ -37,9 +116,25 @@
 			<read>letra, digito</read>
 		</transition>
 		<transition>
-			<from>3</from>
-			<to>3</to>
-			<read>letra, digito</read>
+			<from>0</from>
+			<to>9</to>
+			<controlx>58</controlx>
+			<controly>271</controly>
+			<read>abertura string</read>
+		</transition>
+		<transition>
+			<from>10</from>
+			<to>12</to>
+			<controlx>578</controlx>
+			<controly>511</controly>
+			<read>qualquer outro simbolo</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>8</to>
+			<controlx>132</controlx>
+			<controly>283</controly>
+			<read>comentário #</read>
 		</transition>
 		<transition>
 			<from>1</from>
@@ -48,8 +143,58 @@
 		</transition>
 		<transition>
 			<from>0</from>
+			<to>5</to>
+			<read>digito decimal</read>
+		</transition>
+		<transition>
+			<from>5</from>
+			<to>6</to>
+			<read>letra x, X</read>
+		</transition>
+		<transition>
+			<from>5</from>
+			<to>5</to>
+			<read>digito_decimal</read>
+		</transition>
+		<transition>
+			<from>10</from>
+			<to>9</to>
+			<read>letra, digito</read>
+		</transition>
+		<transition>
+			<from>0</from>
 			<to>3</to>
 			<read>$</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>4</to>
+			<read>negativo '-'</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>1</to>
+			<read>letra, '_'</read>
+		</transition>
+		<transition>
+			<from>6</from>
+			<to>7</to>
+			<read>digito, letra</read>
+		</transition>
+		<transition>
+			<from>10</from>
+			<to>11</to>
+			<read>fecha string</read>
+		</transition>
+		<transition>
+			<from>9</from>
+			<to>10</to>
+			<read>escape \</read>
+		</transition>
+		<transition>
+			<from>6</from>
+			<to>12</to>
+			<read>não é hexadecimal</read>
 		</transition>
 	</automaton>
 </structure>
