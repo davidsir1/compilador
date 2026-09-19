@@ -9,7 +9,7 @@ digraph AFD {
 
     // Estados finais
     node [shape=doublecircle];
-    q1 q2 q3 q5 q7 q8 q11;
+    q1 q2 q3 q5 q7 q11 q13 q14 q15 q16;
 
     // Estados normais
     node [shape=circle];
@@ -23,6 +23,11 @@ digraph AFD {
     q0 -> q5 [label="digito decimal"];
     q0 -> q4 [label="negativo '-'"];
     q0 -> q9 [label="abertura string \""];
+    q0 -> q12 [label="outro caracter inválido"];
+    q0 -> q13 [label="vírgula ','"];
+    q0 -> q14 [label="dois ponto ':'"];
+    q0 -> q15 [label="abre parenteses '('"];
+    q0 -> q16 [label="fecha parenteses ')'"];
 
     // identificador
     q1 -> q1 [label="letra, digito, '_'"];
@@ -38,20 +43,21 @@ digraph AFD {
     q4 -> q12 [label="não é digito"];
     q5 -> q5 [label="digito decimal"];
     q5 -> q6 [label="letra x,X"];
-    q6 -> q7 [label="digito, letra"];
+    q6 -> q7 [label="dígito hex (0 - 9, A - F, a - f)"];
+    q7 -> q7 [label="dígito hex (0 - 9, A - F, a - f)"];
     q6 -> q12 [label="não é hexadecimal"];
 
     // comentario
     q0 -> q8 [label="comentário #"];
-    q8 -> q8 [label="letra, digito, simbolo"];
+    q8 -> q8 [label="letra, digito"];
+    q8 -> q0 [label="quebra de linha '\\n'"]
 
     // string
-    q9 -> q9 [label="letra, digito, simbolo"];
+    q9 -> q9 [label="letra, digito"];
     q9 -> q11 [label="fecha string \""]
     q9 -> q10 [label="escape '\\'"];
-    q10 -> q10 [label="n, t, \", \\, 0"];
-    q10 -> q9 [label="letra, digito"];
-    q10 -> q12 [label="qualquer outro simbolo"];
-    q10 -> q11 [label="fecha string"];
+    q9 -> q12 [label="\\n, EOF"]
+    q10 -> q9 [label="n, t, \", \\, 0"];
+    q10 -> q12 [label="outro caracter, EOF"];
 
 }
