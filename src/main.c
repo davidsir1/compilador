@@ -36,5 +36,8 @@ int main (int argc, char* argv[]) {
     // Chamar a função de analiselexica
     //AnaliseLexica(FILE *in, FILE *out);
 
+    fclose(entrada);
+    fclose(saida);
+
     return 0;
 }
