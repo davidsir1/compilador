@@ -152,11 +152,6 @@
 			<read>letra x, X</read>
 		</transition>
 		<transition>
-			<from>5</from>
-			<to>5</to>
-			<read>digito_decimal</read>
-		</transition>
-		<transition>
 			<from>10</from>
 			<to>9</to>
 			<read>letra, digito</read>
@@ -195,6 +190,11 @@
 			<from>6</from>
 			<to>12</to>
 			<read>não é hexadecimal</read>
+		</transition>
+		<transition>
+			<from>5</from>
+			<to>5</to>
+			<read>digito decimal</read>
 		</transition>
 	</automaton>
 </structure>

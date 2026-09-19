@@ -1,0 +1,57 @@
+digraph AFD {
+    rankdir=LR;
+    node [shape=circle, fontname="Arial", fontsize=11];
+    edge [fontname="Arial", fontsize=9];
+
+    // Estado inicial
+    inicio [shape=point];
+    inicio -> q0;
+
+    // Estados finais
+    node [shape=doublecircle];
+    q1 q2 q3 q5 q7 q8 q11;
+
+    // Estados normais
+    node [shape=circle];
+    q4 q6 q9 q10 q12;
+
+
+    // Saidas do q0
+    q0 -> q1 [label="letra, '_'"];
+    q0 -> q2 [label="ponto '.'"];
+    q0 -> q3 [label="$"]
+    q0 -> q5 [label="digito decimal"];
+    q0 -> q4 [label="negativo '-'"];
+    q0 -> q9 [label="abertura string \""];
+
+    // identificador
+    q1 -> q1 [label="letra, digito, '_'"];
+
+    // diretiva
+    q2 -> q2 [label="letra, digito"];
+
+    // registrador
+    q3 -> q3 [label="letra, digito"];
+
+    // numeros 
+    q4 -> q5 [label="digito decimal"];
+    q4 -> q12 [label="não é digito"];
+    q5 -> q5 [label="digito decimal"];
+    q5 -> q6 [label="letra x,X"];
+    q6 -> q7 [label="digito, letra"];
+    q6 -> q12 [label="não é hexadecimal"];
+
+    // comentario
+    q0 -> q8 [label="comentário #"];
+    q8 -> q8 [label="letra, digito, simbolo"];
+
+    // string
+    q9 -> q9 [label="letra, digito, simbolo"];
+    q9 -> q11 [label="fecha string \""]
+    q9 -> q10 [label="escape '\\'"];
+    q10 -> q10 [label="n, t, \", \\, 0"];
+    q10 -> q9 [label="letra, digito"];
+    q10 -> q12 [label="qualquer outro simbolo"];
+    q10 -> q11 [label="fecha string"];
+
+}
