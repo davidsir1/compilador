@@ -170,8 +170,8 @@ Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, Ta
 
     // Monta o nome do token: DIR_ + nome em maiúsculas sem o ponto
     char maiusculo[100];
-    converter_minusculas(normalizado + 1, maiusculo); // + 1 é pra ignorar o '.'
-    snprintf(nome, sizeof(nome), "DIR_%s", normalizado);
+    converter_maiusculas(normalizado + 1, maiusculo); // + 1 é pra ignorar o '.'
+    snprintf(nome, sizeof(nome), "DIR_%s", maiusculo);
 
     // atualiza a linha/coluna da primeira ocorrência da diretiva
     inserir_simbolo(ts, normalizado, "diretiva", linha, coluna);
