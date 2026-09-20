@@ -61,7 +61,7 @@ int main (int argc, char* argv[]) {
         return 1;
     }
 
-    //AnaliseLexica(entrada_pre, saida_lex);
+    AnaliseLexica(entrada_pre, saida_lex);
 
     fclose(entrada_pre);
     fclose(saida_lex);

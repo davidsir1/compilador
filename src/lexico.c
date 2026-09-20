@@ -125,6 +125,9 @@ void converter_maiusculas(const char *origem, char *destino) {
     destino[i] = '\0';
 }
 
+/*
+ * Função utilizada para montar o token
+ */
 static Token montar_token(const char* nome, const char* lexema, int linha, int coluna) {
     Token tk;
     strncpy(tk.nome, nome, 49);
@@ -162,8 +165,67 @@ Token reconhecer_negativo(FILE *in, int linha, int coluna, int primeiro_char) {
 }
 
 Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
-    Token tk;
-    return tk;
+    char lexema[100];
+    int i = 0;
+    int caracter;
+    int tem_escape_invalido = 0; // Flag utilizada para verificar escape
+
+    lexema[i++] = '"';
+
+    while ((caracter = fgetc(in)) != EOF) {
+        // Fechamento de string
+        if (caracter == '"') {
+            if (i < 99) lexema[i++] = '"';
+            lexema[i] = '\0';
+
+            if (tem_escape_invalido) {
+                return montar_token("ERRO_ESCAPE_INVALIDO", lexema, linha, coluna);
+            }
+
+            return montar_token("STRING", lexema, linha, coluna);
+        }
+
+        // Quebra de linha antes de fechar -> erro
+        if (caracter == '\n') {
+            lexema[i] = '\0';
+            ungetc(caracter, in); // devolve o \n para o traço de repetição contar a linha
+            return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+        }
+
+        // Inicio de escape
+        if (caracter == '\\') {
+            if (i < 99) lexema[i++] = '\\';
+
+            int caracter2 = fgetc(in);
+
+            if (caracter2 == EOF) {
+                lexema[i] = '\0';
+                return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+            }
+
+            if (caracter2 == '\n') {
+                // '\' no fim da linha -> string não fechada
+                lexema[i] = '\0';
+                ungetc(caracter2, in);
+                return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+            }
+
+            if (i < 99) lexema[i++] = (char)caracter2;
+
+            // verifica se é escape válido
+            if (!(caracter2 == 'n' || caracter2 == 't' || caracter2 == '"' || caracter2 == '\\' || caracter2 == '0'))
+                tem_escape_invalido = 1;
+
+            continue;
+        }
+
+        // Caractere comum dentro da string
+        if (i < 99) lexema[i++] = (char)caracter;
+    }
+
+    // EOF antes de fechar a string
+    lexema[i] = '\0';
+    return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
 }
 
 Token reconhecer_simbolo(int caracter, int linha, int coluna) {
@@ -187,8 +249,8 @@ void AnaliseLexica(FILE *in, FILE *out) {
         return;
     }
 
+    // Inicializar a tabela
     TabelaSimbolos ts;
-    // Inicializar tabela
     inicializar_tabela(&ts);
 
     int linha = 1, coluna = 1, houve_erro = 0;
@@ -221,7 +283,7 @@ void AnaliseLexica(FILE *in, FILE *out) {
         } else if (caracter == '-') { // Estado q0 -> q4
 
         } else if (caracter == '"') { // Estado q0 -> q9
-
+            tk = reconhecer_string(in, linha, coluna, caracter);
         } else if (caracter == ',' || caracter == ':' || caracter == '(' || caracter == ')') {
             // Estados q0 --','--> q13   q0 --':'--> q14   q0 --'('--> q15  q0 --')'--> q16
 
@@ -231,9 +293,9 @@ void AnaliseLexica(FILE *in, FILE *out) {
 
         // Escrever na saída .lex
         /*
-         *
+         * A saída do lexema deve ser: <token, lexema> linha coluna
          */
-
+        fprintf(out, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
 
         // Verificar se tiver erro, registrar no .err
         /*
