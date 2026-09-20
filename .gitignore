@@ -4,5 +4,8 @@
 main
 main.exe
 *.pre
+*.lex
+*.err
+*.ts
 *.sh
 notes/
