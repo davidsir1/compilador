@@ -1,6 +1,9 @@
+#include <string.h>
 #include <stdio.h>
 #include "preprocessador.h"
 #include "lexico.h"
+
+void trocar_extensao(const char* origem, const char* nova_extensao, char* destino, int tam);
 
 int main (int argc, char* argv[]) {
 
@@ -8,6 +11,7 @@ int main (int argc, char* argv[]) {
     // Para caso de sucesso, o argc deve ser igual à 3.
     if (argc == 1) {
         printf("Alerta: Voce nao passou argumentos.\n");
+        printf("Uso: %s <arquivo_entrada.asm> <arquivo_saida.lex>\n", argv[0]);
         return 1;
     } else if (argc == 2) {
         printf("Erro: Voce nao passou o arquivo de saida.\n");
@@ -17,27 +21,67 @@ int main (int argc, char* argv[]) {
         return 1;
     }
 
-    FILE* entrada = fopen(argv[1], "r");
-    FILE* saida = fopen("arquivo_saida.pre", "w");
+    // Mudando no nome dos arquivos
+    /*
+     * Pega o nome do arquivo .asm e coloca a exntesão .pre
+     */
+    char nome_arquivo_pre[300];
+    trocar_extensao(argv[1], ".pre", nome_arquivo_pre, 300);
 
-    if (entrada == NULL) {
+    // Etapa do pre processamento
+    FILE* entrada_asm = fopen(argv[1], "r");
+    if (entrada_asm == NULL) {
         printf("Erro: falha em ler o arquivo %s\n.", argv[1]);
         return 1;
     }
 
-    if (saida == NULL) {
+    FILE* saida_pre = fopen(nome_arquivo_pre, "w");
+    if (saida_pre == NULL) {
         printf("Erro: falha na escrita do arquivo %s.\n", argv[2]);
-        fclose(saida);
+        fclose(saida_pre);
         return 1;
     }
 
-    PreProcessamento(entrada, saida); // Mudar a saida para o <arquivo_saida.pre>
+    PreProcessamento(entrada_asm, saida_pre); // Mudar a saida para o <arquivo_saida.pre>
 
-    // Chamar a função de analiselexica
-    //AnaliseLexica(FILE *in, FILE *out);
+    fclose(entrada_asm);
+    fclose(saida_pre);
 
-    fclose(entrada);
-    fclose(saida);
+    // Etapa da análise léxica
+    FILE* entrada_pre = fopen(nome_arquivo_pre, "r");
+    if (entrada_pre == NULL) {
+        printf("Erro: falha ao ler o arquivo %s.\n", nome_arquivo_pre);
+        return 1;
+    }
+
+    FILE* saida_lex = fopen(argv[2], "w");
+    if (saida_lex == NULL) {
+        printf("Erro: falha na escrita do arquivo %s.\n", argv[2]);
+        fclose(saida_lex);
+        return 1;
+    }
+
+    //AnaliseLexica(entrada_pre, saida_lex);
+
+    fclose(entrada_pre);
+    fclose(saida_lex);
 
     return 0;
+}
+
+/*
+ * Função utilizada para pegar o nome do arquivo_entrada e colocar outro tipo
+ * de extensão. No caso, .asm para .pre
+ */
+void trocar_extensao(const char* origem, const char* nova_extensao, char* destino, int tam) {
+    /*
+     * Exemplo: origem = "Exemplo01.asm"
+     * strrchr -> asm
+     */
+    const char* ponto = strrchr(origem, '.');
+    int base = ponto ? (ponto - origem) : strlen(origem);
+    if (base >= tam) base = tam - 1;
+    memcpy(destino, origem, base);
+    destino[base] = '\0';
+    strncat(destino, nova_extensao, tam - base - 1);
 }
