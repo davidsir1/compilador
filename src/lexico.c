@@ -140,8 +140,43 @@ static Token montar_token(const char* nome, const char* lexema, int linha, int c
 }
 
 Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
-    Token tk;
-    return tk;
+    char lexema[100];
+    char normalizado[100];
+    char nome[50];
+    int i = 0;
+    int caracter;
+
+    lexema[i++] = (char)primeiro_char;
+
+    // Letras, digitos e _ (etapa de acumular)
+    while ((caracter = fgetc(in)) != EOF) {
+        if (isalnum(caracter) || caracter == '_') {
+            if (i < 99) lexema[i++] = (char)caracter;
+        } else {
+            break;
+        }
+    }
+
+    lexema[i] = '\0';
+    if (caracter != EOF) ungetc(caracter, in);
+
+    // Normaliza para consulta na tabela de simbolos
+    converter_minusculas(lexema, normalizado);
+    int indice = buscar_simbolo(ts, normalizado);
+
+    if (indice < 0 || strcmp(ts->entradas[indice].categoria, "diretiva") != 0) {
+        return montar_token("ERRO_DIRETIVA_INVALIDA", lexema, linha, coluna);
+    }
+
+    // Monta o nome do token: DIR_ + nome em maiúsculas sem o ponto
+    char maiusculo[100];
+    converter_minusculas(normalizado + 1, maiusculo); // + 1 é pra ignorar o '.'
+    snprintf(nome, sizeof(nome), "DIR_%s", normalizado);
+
+    // atualiza a linha/coluna da primeira ocorrência da diretiva
+    inserir_simbolo(ts, normalizado, "diretiva", linha, coluna);
+
+    return montar_token(nome, lexema, linha, coluna);
 }
 
 Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
@@ -230,6 +265,19 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
 
 Token reconhecer_simbolo(int caracter, int linha, int coluna) {
     Token tk;
+
+    tk.lexema[0] = (char)caracter;
+    tk.lexema[1] = '\0';
+    tk.linha = linha;
+    tk.coluna = coluna;
+
+    switch (caracter) {
+        case ',': strcpy(tk.nome, "SMB_COM"); break;
+        case ':': strcpy(tk.nome, "SMB_COL"); break;
+        case '(': strcpy(tk.nome, "SMB_OPA"); break;
+        case ')': strcpy(tk.nome, "SMB_CPA"); break;
+        default: strcpy(tk.nome, "ERRO_CARACTER_INVALIDO"); break;
+    }
     return tk;
 }
 
