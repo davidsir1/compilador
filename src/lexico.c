@@ -175,14 +175,86 @@ Token reconhecer_simbolo(int caracter, int linha, int coluna) {
  * Função principal para Analise Lexica
  */
 void AnaliseLexica(FILE *in, FILE *out) {
+    if (in == NULL || out == NULL) return;
+
+    // Arquivos de saida da tabela de simbolos e erros
+    FILE* saida_ts = fopen("saida.ts", "w");
+    FILE* saida_err = fopen("saida.err", "w");
+    if (saida_ts == NULL || saida_err == NULL) {
+        printf("Erro: falha ao escrever os arquivos saida.ts ou saida.err.\n");
+        if (saida_ts) fclose(saida_ts);
+        if (saida_err) fclose(saida_err);
+        return;
+    }
+
     TabelaSimbolos ts;
     // Inicializar tabela
     inicializar_tabela(&ts);
 
-    int linha = 1, coluna = 1;
-    int letra;
+    int linha = 1, coluna = 1, houve_erro = 0;
+    int caracter;
 
-    while ((letra = fgetc(in)) != EOF) {
+    while ((caracter = fgetc(in)) != EOF) {
+        // Ignorar espaços, tabulações
+        if (caracter == ' ' || caracter == '\t') {coluna++; continue;}
 
+        // Nova linha quando encontra o fim da linha do arquivo
+        if (caracter == '\n') {linha++; coluna = 1; continue;}
+
+        // Comentário
+        if (caracter == '#') {
+            // Essa parte tem que ler o que está após '#' e quando chegar no final '\n'
+            // incrementar uma linha e atribuir coluna = 1
+
+            continue;
+        }
+
+        Token tk;
+        if (isalnum(caracter) || caracter == '_') { // Estado q0 -> q1
+
+        } else if (caracter == '.') { // Estado q0 -> q2
+
+        } else if (caracter == '$') { // Estado q0 -> q3
+
+        } else if (isdigit(caracter)) { // Estado q0 -> q5
+
+        } else if (caracter == '-') { // Estado q0 -> q4
+
+        } else if (caracter == '"') { // Estado q0 -> q9
+
+        } else if (caracter == ',' || caracter == ':' || caracter == '(' || caracter == ')') {
+            // Estados q0 --','--> q13   q0 --':'--> q14   q0 --'('--> q15  q0 --')'--> q16
+
+        } else { // q0 -> q12
+
+        }
+
+        // Escrever na saída .lex
+        /*
+         *
+         */
+
+
+        // Verificar se tiver erro, registrar no .err
+        /*
+         * será escrito no saida_err com a seguinte estrutura: <tipo_erro, lexema> linha coluna
+         * e dize que houve erro: houve_erro = 1
+         */
+        if (strncmp(tk.nome, "ERRO_", 5) == 0) {
+
+        }
+
+        coluna += (int)strlen(tk.lexema);
     }
+
+    // Escrever o EOF no fim da 'FILE* in' .lex
+
+    imprimir_tabela(&ts, saida_ts);
+
+    if (!houve_erro) {
+        fprintf(saida_err, "Nenhum erro léxico encontrado.");
+    }
+
+    fclose(saida_ts);
+    fclose(saida_err);
 }
