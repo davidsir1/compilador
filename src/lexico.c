@@ -142,13 +142,13 @@ static Token montar_token(const char* nome, const char* lexema, int linha, int c
 Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
     char lexema[100];
     char normalizado[100];
-    char nome[50];
+    char nome[50]; // Variável utilizada para montar o token DIR_*
     int i = 0;
     int caracter;
 
     lexema[i++] = (char)primeiro_char;
 
-    // Letras, digitos e _ (etapa de acumular)
+    // Letras, digitos e '_' (etapa de acumular)
     while ((caracter = fgetc(in)) != EOF) {
         if (isalnum(caracter) || caracter == '_') {
             if (i < 99) lexema[i++] = (char)caracter;
@@ -180,8 +180,38 @@ Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, Ta
 }
 
 Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
-    Token tk;
-    return tk;
+    char lexema[100];
+    char normalizado[100];
+    int i = 0;
+    int caracter;
+
+    // acumula o '$'
+    lexema[i++] = (char)primeiro_char;
+
+    // Continua lendo letras e digitos
+    while ((caracter = fgetc(in)) != EOF) {
+        if (isalnum(caracter)) {
+            if (i < 99) lexema[i++] = (char)caracter;
+        } else {
+            break;
+        }
+    }
+
+    lexema[i] = '\0';
+    if (caracter != EOF) ungetc(caracter, in);
+
+    // Normaliza para consulta na tabela de simbolos
+    converter_minusculas(lexema, normalizado);
+    int indice = buscar_simbolo(ts, normalizado);
+
+    if (indice < 0 || strcmp(ts->entradas[indice].categoria, "registrador") != 0) {
+        return montar_token("ERRO_REGISTRADOR_INVALIDO", lexema, linha, coluna);
+    }
+
+    // atualiza a linha/coluna da primeira ocorrência do registrador
+    inserir_simbolo(ts, normalizado, "registrador", linha, coluna);
+
+    return montar_token("REG", lexema, linha, coluna);
 }
 
 Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
@@ -323,9 +353,9 @@ void AnaliseLexica(FILE *in, FILE *out) {
         if (isalnum(caracter) || caracter == '_') { // Estado q0 -> q1
 
         } else if (caracter == '.') { // Estado q0 -> q2
-
+            tk = reconhecer_diretiva(in, linha, coluna, caracter, &ts);
         } else if (caracter == '$') { // Estado q0 -> q3
-
+            tk = reconhecer_registrador(in, linha, coluna, caracter, &ts);
         } else if (isdigit(caracter)) { // Estado q0 -> q5
 
         } else if (caracter == '-') { // Estado q0 -> q4
