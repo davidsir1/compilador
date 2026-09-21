@@ -7,7 +7,7 @@
 
 static const char* DIRETIVAS[] = {
     ".data", ".text", ".word", ".half", ".byte",
-    ".space", ".ascii", ".asciz", ".globl", ".align"
+    ".space", ".ascii", ".asciiz", ".globl", ".align"
 };
 
 static const char* INSTRUCOES[] = {
