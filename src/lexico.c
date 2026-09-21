@@ -470,7 +470,8 @@ void AnaliseLexica(FILE *in, FILE *out) {
             // Estados q0 --','--> q13   q0 --':'--> q14   q0 --'('--> q15  q0 --')'--> q16
             tk = reconhecer_simbolo(caracter, linha, coluna);
         } else { // q0 -> q12
-
+            char buffer[2] = { (char)caracter, '\0'};
+            tk = montar_token("ERRO_CARACTER_INVALIDO", buffer, linha, coluna);
         }
 
         // Escrever na saída .lex
@@ -485,18 +486,18 @@ void AnaliseLexica(FILE *in, FILE *out) {
          * e dize que houve erro: houve_erro = 1
          */
         if (strncmp(tk.nome, "ERRO_", 5) == 0) {
-
+            fprintf(saida_err, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
+            houve_erro = 1;
         }
 
         coluna += (int)strlen(tk.lexema);
     }
 
-    // Escrever o EOF no fim da 'FILE* in' .lex
-
+    fprintf(out, "<TK_EOF, EOF> %d %d\n", linha, coluna);
     imprimir_tabela(&ts, saida_ts);
 
     if (!houve_erro) {
-        fprintf(saida_err, "Nenhum erro léxico encontrado.");
+        fprintf(saida_err, "Nenhum erro léxico encontrado.\n");
     }
 
     fclose(saida_ts);
