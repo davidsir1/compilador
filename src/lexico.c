@@ -37,6 +37,19 @@ static const char* REGISTRADORES[] = {
 };
 
 // Funções
+/*
+ * Função utilizada para montar o token
+ */
+static Token montar_token(const char* nome, const char* lexema, int linha, int coluna) {
+    Token tk;
+    strncpy(tk.nome, nome, 49);
+    tk.nome[49] = '\0';
+    strncpy(tk.lexema, lexema, 99);
+    tk.lexema[99] = '\0';
+    tk.linha = linha;
+    tk.coluna = coluna;
+    return tk;
+}
 
 void inicializar_tabela(TabelaSimbolos* ts) {
     if (ts == NULL) return;
@@ -125,18 +138,54 @@ void converter_maiusculas(const char *origem, char *destino) {
     destino[i] = '\0';
 }
 
-/*
- * Função utilizada para montar o token
- */
-static Token montar_token(const char* nome, const char* lexema, int linha, int coluna) {
-    Token tk;
-    strncpy(tk.nome, nome, 49);
-    tk.nome[49] = '\0';
-    strncpy(tk.lexema, lexema, 99);
-    tk.lexema[99] = '\0';
-    tk.linha = linha;
-    tk.coluna = coluna;
-    return tk;
+Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i) {
+    int caracter;
+    int hex = 0; // flag para dizer se é hexadecimal
+
+    // Fase 1: dígitos decimais q0 --> q5
+    while ((caracter = fgetc(in)) != EOF) {
+        if (isdigit(caracter)) {
+            if (i < 99) lexema[i++] = caracter;
+        } else if ((caracter == 'x' || caracter == 'X') && // q5 --> q6
+        ((i == 1 && lexema[0] == '0') ||
+        (i == 2 && lexema[0] == '-' && lexema[1] == '0'))) { // '0x' ou '-0x' são hexadecimais
+            if (i < 99) lexema[i++] = caracter;
+            hex = 1;
+            break;
+        } else {
+            break;
+        }
+    }
+
+    // Fase 2: hexadecimal
+    if (hex) {
+        int valido = 0; // 0 - ainda sem dígito, 1 = ok, -1 = inválido
+        while ((caracter = fgetc(in)) != EOF) {
+            if (isxdigit(caracter)) {
+                if (i < 99) lexema[i++] = caracter;
+                if (valido == 0) valido = 1;
+            } else if (isalnum(caracter)) {
+                // Letra diferente de A, B, C, D, E e F: inválido. Continua lendo
+                if (i < 99) lexema[i++] = caracter;
+                valido = -1;
+            } else {
+                break;
+            }
+        }
+
+        lexema[i] = '\0';
+        if (caracter != EOF) ungetc(caracter, in);
+
+        if (valido != -1) {
+            return montar_token("ERRO_NUMERO_MALFORMADO", lexema, linha, coluna);
+        }
+        return montar_token("NUM_INT", lexema, linha, coluna);
+    }
+
+    // Fim: apenas decimal
+    lexema[i] = '\0';
+    if (caracter != EOF) ungetc(caracter, in);
+    return montar_token("NUM_INT", lexema, linha, coluna);
 }
 
 Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
@@ -257,13 +306,36 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
 }
 
 Token reconhecer_numero(FILE *in, int linha, int coluna, int primeiro_char) {
-    Token tk;
-    return tk;
+    char lexema[100];
+    int i = 0;
+
+    lexema[i++] = (char)primeiro_char;
+
+    return continuar_numero(in, linha, coluna, lexema, i);
 }
 
 Token reconhecer_negativo(FILE *in, int linha, int coluna, int primeiro_char) {
-    Token tk;
-    return tk;
+    char lexema[100];
+    int i = 0;
+    int caracter;
+
+    lexema[i++] = '-';
+
+    caracter = fgetc(in);
+
+    if (caracter == EOF) {
+        lexema[i] = '\0';
+        return montar_token("ERRO_CARACTER_INVALIDO", lexema, linha, coluna);
+    }
+
+    if (!isalnum(caracter)) {
+        ungetc(caracter, in);
+        lexema[i] = '\0';
+        return montar_token("ERRO_CARACTER_INVALIDO", lexema, linha, coluna);
+    }
+
+    lexema[i++] = (char)caracter;
+    return continuar_numero(in, linha, coluna, lexema, i);
 }
 
 Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
@@ -382,7 +454,9 @@ void AnaliseLexica(FILE *in, FILE *out) {
         if (caracter == '#') {
             // Essa parte tem que ler o que está após '#' e quando chegar no final '\n'
             // incrementar uma linha e atribuir coluna = 1
-
+            while ((caracter = fgetc(in)) != EOF) {}
+            linha += 1;
+            coluna = 1;
             continue;
         }
 
@@ -394,14 +468,14 @@ void AnaliseLexica(FILE *in, FILE *out) {
         } else if (caracter == '$') { // Estado q0 -> q3
             tk = reconhecer_registrador(in, linha, coluna, caracter, &ts);
         } else if (isdigit(caracter)) { // Estado q0 -> q5
-
+            tk = reconhecer_numero(in, linha, coluna, caracter);
         } else if (caracter == '-') { // Estado q0 -> q4
-
+            tk = reconhecer_negativo(in, linha, coluna, caracter);
         } else if (caracter == '"') { // Estado q0 -> q9
             tk = reconhecer_string(in, linha, coluna, caracter);
         } else if (caracter == ',' || caracter == ':' || caracter == '(' || caracter == ')') {
             // Estados q0 --','--> q13   q0 --':'--> q14   q0 --'('--> q15  q0 --')'--> q16
-
+            tk = reconhecer_simbolo(caracter, linha, coluna);
         } else { // q0 -> q12
 
         }
