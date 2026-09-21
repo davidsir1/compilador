@@ -406,21 +406,16 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
 }
 
 Token reconhecer_simbolo(int caracter, int linha, int coluna) {
-    Token tk;
-
-    tk.lexema[0] = (char)caracter;
-    tk.lexema[1] = '\0';
-    tk.linha = linha;
-    tk.coluna = coluna;
-
+    char nome[50];
     switch (caracter) {
-        case ',': strcpy(tk.nome, "SMB_COM"); break;
-        case ':': strcpy(tk.nome, "SMB_COL"); break;
-        case '(': strcpy(tk.nome, "SMB_OPA"); break;
-        case ')': strcpy(tk.nome, "SMB_CPA"); break;
-        default: strcpy(tk.nome, "ERRO_CARACTERE_INVALIDO"); break;
+        case ',': strcpy(nome, "SMB_COM"); break;
+        case ':': strcpy(nome, "SMB_COL"); break;
+        case '(': strcpy(nome, "SMB_OPA"); break;
+        case ')': strcpy(nome, "SMB_CPA"); break;
+        default: strcpy(nome, "ERRO_CARACTERE_INVALIDO"); break;
     }
-    return tk;
+    char buffer[2] = { (char)caracter, '\0' };
+    return montar_token(nome, buffer, linha, coluna);
 }
 
 /*
@@ -452,6 +447,17 @@ void AnaliseLexica(FILE *in, FILE *out) {
 
         // Nova linha quando encontra o fim da linha do arquivo
         if (caracter == '\n') {linha++; coluna = 1; continue;}
+
+        // Comentário
+        // Isso é pra evitar dele cair no ERRO_CARACTERE_INVALIDO
+        if (caracter == '#') {
+            while ((caracter = fgetc(in)) != EOF && caracter != '\n') {}
+            if (caracter == '\n') {
+                linha++;
+                coluna = 1;
+            }
+            continue;
+        }
 
         Token tk;
         if (isalpha(caracter) || caracter == '_') { // Estado q0 -> q1
@@ -488,6 +494,8 @@ void AnaliseLexica(FILE *in, FILE *out) {
         if (strncmp(tk.nome, "ERRO_", 5) == 0) {
             fprintf(saida_err, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
             houve_erro = 1;
+        } else {
+            fprintf(out, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
         }
 
         coluna += (int)strlen(tk.lexema);
