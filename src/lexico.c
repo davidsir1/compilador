@@ -328,13 +328,13 @@ Token reconhecer_negativo(FILE *in, int linha, int coluna, int primeiro_char) {
 
     if (caracter == EOF) {
         lexema[i] = '\0';
-        return montar_token("ERRO_CARACTER_INVALIDO", lexema, linha, coluna);
+        return montar_token("ERRO_CARACTERE_INVALIDO", lexema, linha, coluna);
     }
 
     if (!isdigit(caracter)) {
         ungetc(caracter, in);
         lexema[i] = '\0';
-        return montar_token("ERRO_CARACTER_INVALIDO", lexema, linha, coluna);
+        return montar_token("ERRO_CARACTERE_INVALIDO", lexema, linha, coluna);
     }
 
     lexema[i++] = (char)caracter;
@@ -418,7 +418,7 @@ Token reconhecer_simbolo(int caracter, int linha, int coluna) {
         case ':': strcpy(tk.nome, "SMB_COL"); break;
         case '(': strcpy(tk.nome, "SMB_OPA"); break;
         case ')': strcpy(tk.nome, "SMB_CPA"); break;
-        default: strcpy(tk.nome, "ERRO_CARACTER_INVALIDO"); break;
+        default: strcpy(tk.nome, "ERRO_CARACTERE_INVALIDO"); break;
     }
     return tk;
 }
@@ -471,7 +471,7 @@ void AnaliseLexica(FILE *in, FILE *out) {
             tk = reconhecer_simbolo(caracter, linha, coluna);
         } else { // q0 -> q12
             char buffer[2] = { (char)caracter, '\0'};
-            tk = montar_token("ERRO_CARACTER_INVALIDO", buffer, linha, coluna);
+            tk = montar_token("ERRO_CARACTERE_INVALIDO", buffer, linha, coluna);
         }
 
         // Escrever na saída .lex
