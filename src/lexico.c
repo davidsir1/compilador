@@ -215,8 +215,45 @@ Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char,
 }
 
 Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int primeiro_char, TabelaSimbolos *ts) {
-    Token tk;
-    return tk;
+    char lexema[100];
+    char normalizado[100];
+    char maiusculo[100];
+    char nome[50];
+    int i = 0;
+    int caracter;
+
+    lexema[i++] = (char)primeiro_char;
+
+    while ((caracter = fgetc(in)) != EOF) {
+        if (isalnum(caracter) || caracter == '_') {
+            if (i < 99) lexema[i++] = (char)caracter;
+        } else {
+            break;
+        }
+    }
+
+    lexema[i] = '\0';
+    if (caracter != EOF) ungetc(caracter, in);
+
+    // Normaliza para consultar na tabela de simbolos
+    converter_minusculas(lexema, normalizado);
+    int indice = buscar_simbolo(ts, normalizado);
+
+    // Se for uma instrução, monta o nome INS_*
+    if (indice >= 0 && strcmp(ts->entradas[indice].categoria, "instrucao") == 0) {
+        converter_maiusculas(lexema, maiusculo);
+        snprintf(nome, sizeof(nome), "INS_%s", maiusculo);
+        return montar_token(nome, lexema, linha, coluna);
+    }
+
+    // caso contrário, é um identificador ID
+    // Se o próximo caracter for ':', é declaração de rótulo
+    if (caracter == ':') {
+        inserir_simbolo(ts, lexema, "identificador/rotulo", linha, coluna);
+    }
+
+    // Se não for ':', é só referência, não insere nada
+    return montar_token("ID", lexema, linha, coluna);
 }
 
 Token reconhecer_numero(FILE *in, int linha, int coluna, int primeiro_char) {
@@ -350,8 +387,8 @@ void AnaliseLexica(FILE *in, FILE *out) {
         }
 
         Token tk;
-        if (isalnum(caracter) || caracter == '_') { // Estado q0 -> q1
-
+        if (isalpha(caracter) || caracter == '_') { // Estado q0 -> q1
+            tk = reconhecer_identificador_ou_instrucao(in, linha, coluna, caracter, &ts);
         } else if (caracter == '.') { // Estado q0 -> q2
             tk = reconhecer_diretiva(in, linha, coluna, caracter, &ts);
         } else if (caracter == '$') { // Estado q0 -> q3
