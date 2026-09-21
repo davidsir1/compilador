@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <ctype.h>
 
-// Tabelas auxiliares
+// Variaveis Globais ou Externas
+char nome_base_saida[255] = "saida"; // Valor padrão 'saida'
 
+// Tabelas auxiliares
 static const char* DIRETIVAS[] = {
     ".data", ".text", ".word", ".half", ".byte",
     ".space", ".ascii", ".asciiz", ".globl", ".align"
@@ -176,7 +178,7 @@ Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i) {
         lexema[i] = '\0';
         if (caracter != EOF) ungetc(caracter, in);
 
-        if (valido != -1) {
+        if (valido != 1) {
             return montar_token("ERRO_NUMERO_MALFORMADO", lexema, linha, coluna);
         }
         return montar_token("NUM_INT", lexema, linha, coluna);
@@ -292,6 +294,9 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
     if (indice >= 0 && strcmp(ts->entradas[indice].categoria, "instrucao") == 0) {
         converter_maiusculas(lexema, maiusculo);
         snprintf(nome, sizeof(nome), "INS_%s", maiusculo);
+
+        inserir_simbolo(ts, normalizado, "instrucao", linha, coluna);
+
         return montar_token(nome, lexema, linha, coluna);
     }
 
@@ -325,13 +330,13 @@ Token reconhecer_negativo(FILE *in, int linha, int coluna, int primeiro_char) {
 
     if (caracter == EOF) {
         lexema[i] = '\0';
-        return montar_token("ERRO_CARACTER_INVALIDO", lexema, linha, coluna);
+        return montar_token("ERRO_CARACTERE_INVALIDO", lexema, linha, coluna);
     }
 
-    if (!isalnum(caracter)) {
+    if (!isdigit(caracter)) {
         ungetc(caracter, in);
         lexema[i] = '\0';
-        return montar_token("ERRO_CARACTER_INVALIDO", lexema, linha, coluna);
+        return montar_token("ERRO_CARACTERE_INVALIDO", lexema, linha, coluna);
     }
 
     lexema[i++] = (char)caracter;
@@ -403,21 +408,16 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
 }
 
 Token reconhecer_simbolo(int caracter, int linha, int coluna) {
-    Token tk;
-
-    tk.lexema[0] = (char)caracter;
-    tk.lexema[1] = '\0';
-    tk.linha = linha;
-    tk.coluna = coluna;
-
+    char nome[50];
     switch (caracter) {
-        case ',': strcpy(tk.nome, "SMB_COM"); break;
-        case ':': strcpy(tk.nome, "SMB_COL"); break;
-        case '(': strcpy(tk.nome, "SMB_OPA"); break;
-        case ')': strcpy(tk.nome, "SMB_CPA"); break;
-        default: strcpy(tk.nome, "ERRO_CARACTER_INVALIDO"); break;
+        case ',': strcpy(nome, "SMB_COM"); break;
+        case ':': strcpy(nome, "SMB_COL"); break;
+        case '(': strcpy(nome, "SMB_OPA"); break;
+        case ')': strcpy(nome, "SMB_CPA"); break;
+        default: strcpy(nome, "ERRO_CARACTERE_INVALIDO"); break;
     }
-    return tk;
+    char buffer[2] = { (char)caracter, '\0' };
+    return montar_token(nome, buffer, linha, coluna);
 }
 
 /*
@@ -427,8 +427,13 @@ void AnaliseLexica(FILE *in, FILE *out) {
     if (in == NULL || out == NULL) return;
 
     // Arquivos de saida da tabela de simbolos e erros
-    FILE* saida_ts = fopen("saida.ts", "w");
-    FILE* saida_err = fopen("saida.err", "w");
+    char nome_ts[300], nome_err[300];
+
+    snprintf(nome_ts, sizeof(nome_ts), "%s.ts", nome_base_saida);
+    snprintf(nome_err, sizeof(nome_err), "%s.err", nome_base_saida);
+
+    FILE* saida_ts = fopen(nome_ts, "w");
+    FILE* saida_err = fopen(nome_err, "w");
     if (saida_ts == NULL || saida_err == NULL) {
         printf("Erro: falha ao escrever os arquivos saida.ts ou saida.err.\n");
         if (saida_ts) fclose(saida_ts);
@@ -451,12 +456,13 @@ void AnaliseLexica(FILE *in, FILE *out) {
         if (caracter == '\n') {linha++; coluna = 1; continue;}
 
         // Comentário
+        // Isso é pra evitar dele cair no ERRO_CARACTERE_INVALIDO
         if (caracter == '#') {
-            // Essa parte tem que ler o que está após '#' e quando chegar no final '\n'
-            // incrementar uma linha e atribuir coluna = 1
-            while ((caracter = fgetc(in)) != EOF) {}
-            linha += 1;
-            coluna = 1;
+            while ((caracter = fgetc(in)) != EOF && caracter != '\n') {}
+            if (caracter == '\n') {
+                linha++;
+                coluna = 1;
+            }
             continue;
         }
 
@@ -477,14 +483,14 @@ void AnaliseLexica(FILE *in, FILE *out) {
             // Estados q0 --','--> q13   q0 --':'--> q14   q0 --'('--> q15  q0 --')'--> q16
             tk = reconhecer_simbolo(caracter, linha, coluna);
         } else { // q0 -> q12
-
+            char buffer[2] = { (char)caracter, '\0'};
+            tk = montar_token("ERRO_CARACTERE_INVALIDO", buffer, linha, coluna);
         }
 
         // Escrever na saída .lex
         /*
          * A saída do lexema deve ser: <token, lexema> linha coluna
          */
-        fprintf(out, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
 
         // Verificar se tiver erro, registrar no .err
         /*
@@ -492,18 +498,20 @@ void AnaliseLexica(FILE *in, FILE *out) {
          * e dize que houve erro: houve_erro = 1
          */
         if (strncmp(tk.nome, "ERRO_", 5) == 0) {
-
+            fprintf(saida_err, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
+            houve_erro = 1;
+        } else {
+            fprintf(out, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
         }
 
         coluna += (int)strlen(tk.lexema);
     }
 
-    // Escrever o EOF no fim da 'FILE* in' .lex
-
+    fprintf(out, "<TK_EOF, EOF> %d %d\n", linha, coluna);
     imprimir_tabela(&ts, saida_ts);
 
     if (!houve_erro) {
-        fprintf(saida_err, "Nenhum erro léxico encontrado.");
+        fprintf(saida_err, "Nenhum erro léxico encontrado.\n");
     }
 
     fclose(saida_ts);
