@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <ctype.h>
 
-// Tabelas auxiliares
+// Variaveis Globais ou Externas
+char nome_base_saida[255] = "saida"; // Valor padrão 'saida'
 
+// Tabelas auxiliares
 static const char* DIRETIVAS[] = {
     ".data", ".text", ".word", ".half", ".byte",
     ".space", ".ascii", ".asciiz", ".globl", ".align"
@@ -425,8 +427,13 @@ void AnaliseLexica(FILE *in, FILE *out) {
     if (in == NULL || out == NULL) return;
 
     // Arquivos de saida da tabela de simbolos e erros
-    FILE* saida_ts = fopen("saida.ts", "w");
-    FILE* saida_err = fopen("saida.err", "w");
+    char nome_ts[300], nome_err[300];
+
+    snprintf(nome_ts, sizeof(nome_ts), "%s.ts", nome_base_saida);
+    snprintf(nome_err, sizeof(nome_err), "%s.err", nome_base_saida);
+
+    FILE* saida_ts = fopen(nome_ts, "w");
+    FILE* saida_err = fopen(nome_err, "w");
     if (saida_ts == NULL || saida_err == NULL) {
         printf("Erro: falha ao escrever os arquivos saida.ts ou saida.err.\n");
         if (saida_ts) fclose(saida_ts);

@@ -61,6 +61,13 @@ int main (int argc, char* argv[]) {
         return 1;
     }
 
+    // Extrai o nome do argv[2] e guarda na variável nome_base_saida
+    const char* ponto = strrchr(argv[2], '.');
+    int base = ponto ? (ponto - argv[2]) : strlen(argv[2]);
+    if (base >= sizeof(nome_base_saida)) base = sizeof(nome_base_saida) - 1;
+    memcpy(nome_base_saida, argv[2], base);
+    nome_base_saida[base] = '\0';
+
     AnaliseLexica(entrada_pre, saida_lex);
 
     fclose(entrada_pre);

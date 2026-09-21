@@ -5,6 +5,12 @@
 
 #define MAX_SIMBOLOS 600
 
+/*
+ * Variável utilizada para derivar as saídas .ts e .err dentro da AnaliseLexica()
+ * de acordo com as instruções do PDF, a função não pode ter diferentes parametros
+ */
+extern char nome_base_saida[255];
+
 typedef struct {
     char nome[50]; // nome da categoria do token
     char lexema[100]; // sequência de caracteres encontrada no programa
