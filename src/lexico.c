@@ -331,7 +331,7 @@ Token reconhecer_negativo(FILE *in, int linha, int coluna, int primeiro_char) {
         return montar_token("ERRO_CARACTER_INVALIDO", lexema, linha, coluna);
     }
 
-    if (!isalnum(caracter)) {
+    if (!isdigit(caracter)) {
         ungetc(caracter, in);
         lexema[i] = '\0';
         return montar_token("ERRO_CARACTER_INVALIDO", lexema, linha, coluna);
