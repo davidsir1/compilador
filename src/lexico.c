@@ -491,7 +491,6 @@ void AnaliseLexica(FILE *in, FILE *out) {
         /*
          * A saída do lexema deve ser: <token, lexema> linha coluna
          */
-        fprintf(out, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
 
         // Verificar se tiver erro, registrar no .err
         /*
