@@ -176,7 +176,7 @@ Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i) {
         lexema[i] = '\0';
         if (caracter != EOF) ungetc(caracter, in);
 
-        if (valido != -1) {
+        if (valido != 1) {
             return montar_token("ERRO_NUMERO_MALFORMADO", lexema, linha, coluna);
         }
         return montar_token("NUM_INT", lexema, linha, coluna);
