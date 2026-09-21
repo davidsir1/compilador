@@ -453,16 +453,6 @@ void AnaliseLexica(FILE *in, FILE *out) {
         // Nova linha quando encontra o fim da linha do arquivo
         if (caracter == '\n') {linha++; coluna = 1; continue;}
 
-        // Comentário
-        if (caracter == '#') {
-            // Essa parte tem que ler o que está após '#' e quando chegar no final '\n'
-            // incrementar uma linha e atribuir coluna = 1
-            while ((caracter = fgetc(in)) != EOF) {}
-            linha += 1;
-            coluna = 1;
-            continue;
-        }
-
         Token tk;
         if (isalpha(caracter) || caracter == '_') { // Estado q0 -> q1
             tk = reconhecer_identificador_ou_instrucao(in, linha, coluna, caracter, &ts);
