@@ -292,6 +292,9 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
     if (indice >= 0 && strcmp(ts->entradas[indice].categoria, "instrucao") == 0) {
         converter_maiusculas(lexema, maiusculo);
         snprintf(nome, sizeof(nome), "INS_%s", maiusculo);
+
+        inserir_simbolo(ts, normalizado, "instrucao", linha, coluna);
+
         return montar_token(nome, lexema, linha, coluna);
     }
 
