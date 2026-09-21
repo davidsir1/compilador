@@ -33,15 +33,32 @@ typedef struct {
 void AnaliseLexica(FILE* in, FILE* out);
 
 // Funções auxiliares
+
 /*
- * Escrever sobre as funções inicializar_tabela, buscar_simbolo, inserir_simbolo, imprimir_tabela
+ * Popula a Tabela de Simbolos com todas as diretivas, instruções e registradores
+ * previstors na linguagem Assebmly. Todas as entradas começam com linha e coluna 0
+ * e são atualizadas na primeira ocorrência de cada simbolo
  */
 void inicializar_tabela(TabelaSimbolos* ts);
 
+/*
+ * faz uma busca de um lexema na Tabela de Simbolos por comparação.
+ * Retorna o índice de entrada se encontrado ou -1 caso contrário
+ */
 int buscar_simbolo(TabelaSimbolos* ts, const char* lexema);
 
+/*
+ * insere um simbolo na Tabela de Simbolos. Se o lexema já existir, ele atualiza
+ * a linha e coluna da primeira ocorrência. Retorna 1 se inseriu, 0 se já existia, -1 em erro
+ * (tabela cheia ou parametros nulos)
+ */
 int inserir_simbolo(TabelaSimbolos* ts, const char* lexema, const char* categoria, int linha, int coluna);
 
+/*
+ * Escreve a Tabela de Simbolos completa no arquvio de saída
+ * no formato CSV: LEXEMA, CATEGORIA, LINHA, COLUNA
+ * Cada lexema aparece uma única vez
+ */
 void imprimir_tabela(TabelaSimbolos* ts, FILE* saida);
 
 /*
