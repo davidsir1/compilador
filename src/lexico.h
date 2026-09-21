@@ -39,6 +39,13 @@ int inserir_simbolo(TabelaSimbolos* ts, const char* lexema, const char* categori
 void imprimir_tabela(TabelaSimbolos* ts, FILE* saida);
 
 /*
+ * Função auxiliar para continuar a leitura de um número.
+ * lexema contém o prefixo acumulado
+ * i é o tamanho atual do lexema (índice onde o próximo caracter é escrito)
+ */
+Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i);
+
+/*
  * Função que reconhece um identificador ou instrução (estado q1)
  * Recebe primeiro caractere (letra ou '_') já lido e devolve um Token preenchido
  * Se for rótulo (seguido de ':'), insere automaticamente na Tabela de Simbolos. Caso ocorra um erro,
