@@ -8,9 +8,9 @@
 
 void PreProcessamento(FILE* arquivo_entrada, FILE* arquivo_saida);
 
-char* remover_comentarios(char *linha);
+void remover_comentarios(char *linha);
 
-char* normalizar_linha(char* linha);
+void normalizar_linha(char* linha);
 
 int esta_escapado(const char* linha, int pos);
 
