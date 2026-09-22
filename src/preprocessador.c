@@ -76,7 +76,7 @@ char* normalizar_linha(char *linha)
         if (dentro_string) {
             linha[j++] = linha[i];
 
-            if (linha[i] == '"' && (i == 0 || linha[i - 1] != '\\')) {
+            if (linha[i] == '"' && !esta_escapado(linha, i)) {
                 dentro_string = 0;
             }
 
@@ -137,4 +137,14 @@ char* normalizar_linha(char *linha)
     linha[j] = '\0';
 
     return linha;
+}
+
+int esta_escapado(const char* linha, int pos) {
+    int contador = 0;
+    int j = pos - 1;
+    while (j >= 0 && linha[j] == '\\') {
+        contador++;
+        j--;
+    }
+    return contador % 2;
 }

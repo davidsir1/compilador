@@ -12,4 +12,6 @@ char* remover_comentarios(char *linha);
 
 char* normalizar_linha(char* linha);
 
+int esta_escapado(const char* linha, int pos);
+
 #endif // PROCESSADOR_H
