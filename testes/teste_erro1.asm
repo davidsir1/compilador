@@ -1,5 +1,5 @@
 .text
 main:
-    li $t10, 5      # $t10 nao existe
-    li $v0, 10
+    li $t10, 5
+    add $t1, $t0, @
     syscall

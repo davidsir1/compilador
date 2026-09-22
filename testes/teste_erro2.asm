@@ -1,4 +1,7 @@
+.data
+    valor: .dados 10
+
 .text
 main:
-    add $t1, $t0, @     # @ invalido
+    li $v0, 0xG1
     syscall

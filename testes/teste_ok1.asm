@@ -1,6 +1,6 @@
 .data
     msg: .asciiz "Ola mundo"
-    num: .word 42
+    num: .word 10
 
 .text
 main:
