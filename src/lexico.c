@@ -159,6 +159,21 @@ Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i) {
         }
     }
 
+    // Digito seguido de letra -> identificador malformado
+    if (!hex && caracter != EOF && isalpha(caracter)) {
+        if (i < 99) lexema[i++] = (char)caracter;
+        while ((caracter = fgetc(in)) != EOF) {
+            if (isalnum((unsigned char)caracter) || caracter == '_') {
+                if (i < 99) lexema[i++] = (char)caracter;
+            } else {
+                break;
+            }
+        }
+        lexema[i] = '\0';
+        if (caracter != EOF) ungetc(caracter, in);
+        return montar_token("ERRO_IDENTIFICADOR_MALFORMADO", lexema, linha, coluna);
+    }
+
     // Fase 2: hexadecimal
     if (hex) {
         int valido = 0; // 0 - ainda sem dígito, 1 = ok, -1 = inválido
@@ -284,6 +299,29 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
     }
 
     lexema[i] = '\0';
+    //if (caracter != EOF) ungetc(caracter, in);
+
+    // Se o delimitador não for válido após um ID, é malformado
+    int delimitador_valido = (caracter == EOF ||
+                              caracter == ' '  || caracter == '\t' ||
+                              caracter == '\n' || caracter == '\r' ||
+                              caracter == ','  || caracter == ':'  ||
+                              caracter == '('  || caracter == ')');
+
+    if (!delimitador_valido) {
+        // Consome tudo até um delimitador real para reportar o lexema completo
+        while (caracter != EOF && caracter != ' '  && caracter != '\t' &&
+               caracter != '\n' && caracter != '\r' &&
+               caracter != ','  && caracter != ':'  &&
+               caracter != '('  && caracter != ')') {
+            if (i < 99) lexema[i++] = (char)caracter;
+            caracter = fgetc(in);
+        }
+        lexema[i] = '\0';
+        if (caracter != EOF) ungetc(caracter, in);
+        return montar_token("ERRO_IDENTIFICADOR_MALFORMADO", lexema, linha, coluna);
+    }
+
     if (caracter != EOF) ungetc(caracter, in);
 
     // Normaliza para consultar na tabela de simbolos
