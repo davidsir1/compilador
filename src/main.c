@@ -23,10 +23,10 @@ int main (int argc, char* argv[]) {
 
     // Mudando no nome dos arquivos
     /*
-     * Pega o nome do arquivo .asm e coloca a exntesão .pre
+     * Pega o nome do arquivo .lex e coloca a exntesão .pre
      */
     char nome_arquivo_pre[300];
-    trocar_extensao(argv[1], ".pre", nome_arquivo_pre, 300);
+    trocar_extensao(argv[2], ".pre", nome_arquivo_pre, 300);
 
     // Etapa do pre processamento
     FILE* entrada_asm = fopen(argv[1], "r");
