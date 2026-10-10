@@ -38,7 +38,6 @@ int main (int argc, char* argv[]) {
     FILE* saida_pre = fopen(nome_arquivo_pre, "w");
     if (saida_pre == NULL) {
         printf("Erro: falha na escrita do arquivo %s.\n", argv[2]);
-        fclose(saida_pre);
         return 1;
     }
 
@@ -57,7 +56,6 @@ int main (int argc, char* argv[]) {
     FILE* saida_lex = fopen(argv[2], "w");
     if (saida_lex == NULL) {
         printf("Erro: falha na escrita do arquivo %s.\n", argv[2]);
-        fclose(saida_lex);
         return 1;
     }
 
