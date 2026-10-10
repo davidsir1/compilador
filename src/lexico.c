@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#define MAX_LEXEMA_BUFFER 99
+
 // Variaveis Globais ou Externas
 char nome_base_saida[255] = "saida"; // Valor padrão 'saida'
 
@@ -51,6 +53,22 @@ static Token montar_token(const char* nome, const char* lexema, int linha, int c
     tk.linha = linha;
     tk.coluna = coluna;
     return tk;
+}
+
+/*
+ * Função para consumir o restante do LEXEMA até encontrar o delimitador real
+ */
+static int consumir_resto(FILE* in) {
+    int c;
+    while ((c = fgetc(in)) != EOF) {
+        if (c == ' '  || c == '\t' || c == '\n' || c == '\r' ||
+           c == ','  || c == ':'  || c == '('  || c == ')') {
+               ungetc(c, in);
+               return c;
+           }
+    }
+
+    return EOF;
 }
 
 void inicializar_tabela(TabelaSimbolos* ts) {
@@ -143,15 +161,20 @@ void converter_maiusculas(const char *origem, char *destino) {
 Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i) {
     int caracter;
     int hex = 0; // flag para dizer se é hexadecimal
+    int truncado = 0;
 
     // Fase 1: dígitos decimais q0 --> q5
     while ((caracter = fgetc(in)) != EOF) {
         if (isdigit(caracter)) {
-            if (i < 99) lexema[i++] = caracter;
+            //if (i < 99) lexema[i++] = caracter;
+            if (i < MAX_LEXEMA_BUFFER) lexema[i++] = caracter;
+            else truncado = 1;
         } else if ((caracter == 'x' || caracter == 'X') && // q5 --> q6
         ((i == 1 && lexema[0] == '0') ||
         (i == 2 && lexema[0] == '-' && lexema[1] == '0'))) { // '0x' ou '-0x' são hexadecimais
-            if (i < 99) lexema[i++] = caracter;
+            //if (i < 99) lexema[i++] = caracter;
+            if (i < MAX_LEXEMA_BUFFER) lexema[i++] = caracter;
+            else truncado = 1;
             hex = 1;
             break;
         } else {
@@ -164,11 +187,15 @@ Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i) {
         int valido = 0; // 0 - ainda sem dígito, 1 = ok, -1 = inválido
         while ((caracter = fgetc(in)) != EOF) {
             if (isxdigit(caracter)) {
-                if (i < 99) lexema[i++] = caracter;
+                //if (i < 99) lexema[i++] = caracter;
+                if (i < MAX_LEXEMA_BUFFER) lexema[i++] = caracter;
+                else truncado = 1;
                 if (valido == 0) valido = 1;
             } else if (isalnum(caracter)) {
                 // Letra diferente de A, B, C, D, E e F: inválido. Continua lendo
-                if (i < 99) lexema[i++] = caracter;
+                //if (i < 99) lexema[i++] = caracter;
+                if (i < MAX_LEXEMA_BUFFER) lexema[i++] = caracter;
+                else truncado = 1;
                 valido = -1;
             } else {
                 break;
@@ -178,6 +205,9 @@ Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i) {
         lexema[i] = '\0';
         if (caracter != EOF) ungetc(caracter, in);
 
+        if (truncado) {
+            return montar_token("ERRO_NUMERO_MALFORMADO", lexema, linha, coluna);
+        }
         if (valido != 1) {
             return montar_token("ERRO_NUMERO_MALFORMADO", lexema, linha, coluna);
         }
@@ -187,6 +217,8 @@ Token continuar_numero(FILE* in, int linha, int coluna, char* lexema, int i) {
     // Fim: apenas decimal
     lexema[i] = '\0';
     if (caracter != EOF) ungetc(caracter, in);
+    if (truncado)
+        return montar_token("ERRO_NUMERO_MALFORMADO", lexema, linha, coluna);
     return montar_token("NUM_INT", lexema, linha, coluna);
 }
 
@@ -196,13 +228,16 @@ Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, Ta
     char nome[50]; // Variável utilizada para montar o token DIR_*
     int i = 0;
     int caracter;
+    int truncado = 0;
 
     lexema[i++] = (char)primeiro_char;
 
     // Letras, digitos e '_' (etapa de acumular)
     while ((caracter = fgetc(in)) != EOF) {
         if (isalnum(caracter) || caracter == '_') {
-            if (i < 99) lexema[i++] = (char)caracter;
+            //if (i < 99) lexema[i++] = (char)caracter;
+            if (i < MAX_LEXEMA_BUFFER) lexema[i++] = (char)caracter;
+            else truncado = 1;
         } else {
             break;
         }
@@ -210,6 +245,11 @@ Token reconhecer_diretiva(FILE *in, int linha, int coluna, int primeiro_char, Ta
 
     lexema[i] = '\0';
     if (caracter != EOF) ungetc(caracter, in);
+
+    if (truncado) {
+        consumir_resto(in);
+        return montar_token("ERRO_DIRETIVA_INVALIDA", lexema, linha, coluna);
+    }
 
     // Normaliza para consulta na tabela de simbolos
     converter_minusculas(lexema, normalizado);
@@ -235,6 +275,7 @@ Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char,
     char normalizado[100];
     int i = 0;
     int caracter;
+    int truncado = 0;
 
     // acumula o '$'
     lexema[i++] = (char)primeiro_char;
@@ -242,7 +283,9 @@ Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char,
     // Continua lendo letras e digitos
     while ((caracter = fgetc(in)) != EOF) {
         if (isalnum(caracter)) {
-            if (i < 99) lexema[i++] = (char)caracter;
+            //if (i < 99) lexema[i++] = (char)caracter;
+            if (i < MAX_LEXEMA_BUFFER) lexema[i++] = (char)caracter;
+            else truncado = 1;
         } else {
             break;
         }
@@ -250,6 +293,11 @@ Token reconhecer_registrador(FILE *in, int linha, int coluna, int primeiro_char,
 
     lexema[i] = '\0';
     if (caracter != EOF) ungetc(caracter, in);
+
+    if (truncado) {
+        consumir_resto(in);
+        return montar_token("ERRO_REGISTRADOR_INVALIDO", lexema, linha, coluna);
+    }
 
     // Normaliza para consulta na tabela de simbolos
     converter_minusculas(lexema, normalizado);
@@ -272,12 +320,14 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
     char nome[50];
     int i = 0;
     int caracter;
+    int truncado = 0;
 
     lexema[i++] = (char)primeiro_char;
 
     while ((caracter = fgetc(in)) != EOF) {
         if (isalnum(caracter) || caracter == '_') {
-            if (i < 99) lexema[i++] = (char)caracter;
+            //if (i < 99) lexema[i++] = (char)caracter;
+            if (i < MAX_LEXEMA_BUFFER) lexema[i++] = (char)caracter;
         } else {
             break;
         }
@@ -285,6 +335,7 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
 
     lexema[i] = '\0';
     if (caracter != EOF) ungetc(caracter, in);
+
 
     // Normaliza para consultar na tabela de simbolos
     converter_minusculas(lexema, normalizado);
@@ -354,7 +405,8 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
     while ((caracter = fgetc(in)) != EOF) {
         // Fechamento de string
         if (caracter == '"') {
-            if (i < 99) lexema[i++] = '"';
+            //if (i < 99) lexema[i++] = '"';
+            if (i < MAX_LEXEMA_BUFFER) lexema[i++] = '"';
             lexema[i] = '\0';
 
             if (tem_escape_invalido) {
@@ -373,7 +425,8 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
 
         // Inicio de escape
         if (caracter == '\\') {
-            if (i < 99) lexema[i++] = '\\';
+            //if (i < 99) lexema[i++] = '\\';
+            if (i < MAX_LEXEMA_BUFFER) lexema[i++] = '\\';
 
             int caracter2 = fgetc(in);
 
@@ -389,7 +442,8 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
                 return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
             }
 
-            if (i < 99) lexema[i++] = (char)caracter2;
+            //if (i < 99) lexema[i++] = (char)caracter2;
+            if (i < MAX_LEXEMA_BUFFER) lexema[i++] = (char)caracter2;
 
             // verifica se é escape válido
             if (!(caracter2 == 'n' || caracter2 == 't' || caracter2 == '"' || caracter2 == '\\' || caracter2 == '0'))
@@ -399,7 +453,8 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
         }
 
         // Caractere comum dentro da string
-        if (i < 99) lexema[i++] = (char)caracter;
+        //if (i < 99) lexema[i++] = (char)caracter;
+        if (i < MAX_LEXEMA_BUFFER) lexema[i++] = (char)caracter;
     }
 
     // EOF antes de fechar a string
