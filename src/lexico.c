@@ -20,7 +20,7 @@ static const char* INSTRUCOES[] = {
     // Operações lógicas, deslocamento e comparação
     "and", "or", "xor", "nor", "sll", "srl", "slt",
     // Desvio e controle
-    "beq", "bne", "blt", "ble", "bgt", "j", "jal", "jr", "syscall", "nop"
+    "beq", "bne", "blt", "ble", "bgt", "bge", "j", "jal", "jr", "syscall", "nop"
 };
 
 static const char* REGISTRADORES[] = {
