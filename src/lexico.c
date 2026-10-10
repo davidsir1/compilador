@@ -7,6 +7,9 @@
 
 // Variaveis Globais ou Externas
 char nome_base_saida[255] = "saida"; // Valor padrão 'saida'
+static FILE* g_saida_err = NULL;
+static int   g_houve_erro = 0;
+static int   g_ultimo_comprimento = 1;
 
 // Tabelas auxiliares
 static const char* DIRETIVAS[] = {
@@ -69,6 +72,16 @@ static int consumir_resto(FILE* in) {
     }
 
     return EOF;
+}
+
+/*
+ * Função registra um erro imediatamente no .err.
+ * Usada por reconhecedores que geram múltiplos erros
+ */
+static void registrar_erro(const char* tipo, const char* lexema, int linha, int coluna) {
+    if (g_saida_err == NULL) return;
+    fprintf(g_saida_err, "<%s, %s> %d %d\n", tipo, lexema, linha, coluna);
+    g_houve_erro = 1;
 }
 
 void inicializar_tabela(TabelaSimbolos* ts) {
@@ -404,6 +417,7 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
     int i = 0;
     int caracter;
     int tem_escape_invalido = 0; // Flag utilizada para verificar escape
+    int truncado = 0;
 
     lexema[i++] = '"';
 
@@ -424,35 +438,42 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
         // Quebra de linha antes de fechar -> erro
         if (caracter == '\n') {
             lexema[i] = '\0';
-            ungetc(caracter, in); // devolve o \n para o traço de repetição contar a linha
-            return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+            ungetc(caracter, in);   /* o \n não conta no comprimento */
+            registrar_erro("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+            return montar_token("__HANDLED__", lexema, linha, coluna);
         }
 
         // Inicio de escape
         if (caracter == '\\') {
             //if (i < 99) lexema[i++] = '\\';
             if (i < MAX_LEXEMA_BUFFER) lexema[i++] = '\\';
+            else truncado = 1;
 
             int caracter2 = fgetc(in);
 
             if (caracter2 == EOF) {
                 lexema[i] = '\0';
-                return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+                registrar_erro("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+                return montar_token("__HANDLED__", lexema, linha, coluna);
             }
 
             if (caracter2 == '\n') {
                 // '\' no fim da linha -> string não fechada
                 lexema[i] = '\0';
                 ungetc(caracter2, in);
-                return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+                registrar_erro("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+                return montar_token("__HANDLED__", lexema, linha, coluna);
             }
 
             //if (i < 99) lexema[i++] = (char)caracter2;
             if (i < MAX_LEXEMA_BUFFER) lexema[i++] = (char)caracter2;
+            else truncado = 1;
 
             // verifica se é escape válido
-            if (!(caracter2 == 'n' || caracter2 == 't' || caracter2 == '"' || caracter2 == '\\' || caracter2 == '0'))
-                tem_escape_invalido = 1;
+            if (!(caracter2 == 'n' || caracter2 == 't' || caracter2 == '"' || caracter2 == '\\' || caracter2 == '0')) {
+                char escape[3] = { '\\', (char)caracter2, '\0'};
+                registrar_erro("ERRO_ESCAPE_INVALIDO", lexema, linha, coluna);
+            }
 
             continue;
         }
@@ -460,11 +481,13 @@ Token reconhecer_string(FILE *in, int linha, int coluna, int primeiro_char) {
         // Caractere comum dentro da string
         //if (i < 99) lexema[i++] = (char)caracter;
         if (i < MAX_LEXEMA_BUFFER) lexema[i++] = (char)caracter;
+        else truncado = 1;
     }
 
     // EOF antes de fechar a string
     lexema[i] = '\0';
-    return montar_token("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+    registrar_erro("ERRO_STRING_NAO_FECHADA", lexema, linha, coluna);
+    return montar_token("__HANDLED__", lexema, linha, coluna);
 }
 
 Token reconhecer_simbolo(int caracter, int linha, int coluna) {
@@ -507,6 +530,9 @@ void AnaliseLexica(FILE *in, FILE *out) {
 
     int linha = 1, coluna = 1, houve_erro = 0;
     int caracter;
+    g_saida_err = saida_err;
+    g_houve_erro = 0;
+    g_ultimo_comprimento = 1;
 
     while ((caracter = fgetc(in)) != EOF) {
         // Ignorar espaços, tabulações
@@ -557,11 +583,12 @@ void AnaliseLexica(FILE *in, FILE *out) {
          * será escrito no saida_err com a seguinte estrutura: <tipo_erro, lexema> linha coluna
          * e dize que houve erro: houve_erro = 1
          */
-        if (strncmp(tk.nome, "ERRO_", 5) == 0) {
-            fprintf(saida_err, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
-            houve_erro = 1;
-        } else {
-            fprintf(out, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
+        if (strcmp(tk.nome, "__HANDLED__") != 0) {
+            if (strncmp(tk.nome, "ERRO_", 5) == 0) {
+                registrar_erro(tk.nome, tk.lexema, tk.linha, tk.coluna);
+            } else {
+                fprintf(out, "<%s, %s> %d %d\n", tk.nome, tk.lexema, tk.linha, tk.coluna);
+            }
         }
 
         coluna += (int)strlen(tk.lexema);
