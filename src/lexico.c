@@ -328,6 +328,7 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
         if (isalnum(caracter) || caracter == '_') {
             //if (i < 99) lexema[i++] = (char)caracter;
             if (i < MAX_LEXEMA_BUFFER) lexema[i++] = (char)caracter;
+            else truncado = 1;
         } else {
             break;
         }
@@ -336,6 +337,10 @@ Token reconhecer_identificador_ou_instrucao(FILE *in, int linha, int coluna, int
     lexema[i] = '\0';
     if (caracter != EOF) ungetc(caracter, in);
 
+    if (truncado) {
+        consumir_resto(in);
+        return montar_token("ERRO_IDENTIFICADOR_MALFORMADO", lexema, linha, coluna);
+    }
 
     // Normaliza para consultar na tabela de simbolos
     converter_minusculas(lexema, normalizado);
