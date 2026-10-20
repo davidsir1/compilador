@@ -264,6 +264,17 @@ void liberar_arvore(NoArvore *raiz) {
 NoArvore* analise_programa(AnaliseEstado* a) {
     NoArvore* no = novo_no("<programa>");
 
+    while (token_atual(a) && !verificar(a, "TK_EOF")) {
+        NoArvore* filho = no_terminal(token_atual(a));
+        adicionar_filho(no, filho);
+        avancar(a);
+    }
+
+    if (token_atual(a)) {
+        adicionar_filho(no, no_terminal(token_atual(a)));
+        avancar(a);
+    }
+
     return no;
 }
 
@@ -283,7 +294,7 @@ int AnaliseSintatica(FILE *tokens, FILE *arvore, FILE *erros) {
     NoArvore* raiz = analise_programa(&a);
 
     if (!a.houve_erro && raiz) {
-        fprintf(arvore, "diagrapph ArvoreSintatica {\n");
+        fprintf(arvore, "diagraph ArvoreSintatica {\n");
         fprintf(arvore, "   graph [ordering=out];\n");
         fprintf(arvore, "   node [shape=box, fontname=\"Arial\"];\n");
         fprintf(arvore, "   edge [arrowhead=none];\n");
