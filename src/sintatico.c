@@ -294,7 +294,7 @@ int AnaliseSintatica(FILE *tokens, FILE *arvore, FILE *erros) {
     NoArvore* raiz = analise_programa(&a);
 
     if (!a.houve_erro && raiz) {
-        fprintf(arvore, "diagraph ArvoreSintatica {\n");
+        fprintf(arvore, "digraph ArvoreSintatica {\n");
         fprintf(arvore, "   graph [ordering=out];\n");
         fprintf(arvore, "   node [shape=box, fontname=\"Arial\"];\n");
         fprintf(arvore, "   edge [arrowhead=none];\n");
