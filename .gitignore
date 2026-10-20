@@ -8,4 +8,5 @@ main.exe
 *.err
 *.ts
 *.sh
+*.dot
 notes/
