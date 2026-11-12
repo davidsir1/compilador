@@ -11,7 +11,8 @@ void trim(char* str) {
     if (p != str) memmove(str, p, strlen(p) + 1);
 
     int len = strlen(str);
-    while (len > 0 && (str[len-1]) == ' ' || str[len-1] == '\t' || str[len-1] == '\n' || str[len-1] == '\r') {
+    while (len > 0 && (str[len-1] == ' ' || str[len-1] == '\t' ||
+                       str[len-1] == '\n' || str[len-1] == '\r')) {
         str[len-1] = '\0';
         len--;
     }
@@ -31,14 +32,14 @@ int carregar_tokens(FILE* in, AnaliseEstado* a) {
         // Estado: <NOME, LEXEMA> linha coluna
         char* abre = strchr(linha, '<');
         char* virgula = abre ? strchr(abre, ',') : NULL;
-        char* fecha = virgula ? strchr(virgula, '>') : NULL;
+        char* fecha = virgula ? strrchr(virgula, '>') : NULL;
 
         if (!abre || !virgula || !fecha) continue;
 
         int n_nome = (int)(virgula - abre - 1);
         int n_lex = (int)(fecha - virgula - 1);
-        if (n_nome <= 0 || n_nome >= 50) continue;
-        if (n_lex <= 0 || n_lex >= 50) continue;
+        if (n_nome <= 0 || n_nome >= (int)sizeof(tk.nome)) continue;
+        if (n_lex <= 0 || n_lex >= (int)sizeof(tk.lexema)) continue;
 
         memcpy(tk.nome, abre + 1, n_nome); tk.nome[n_nome] = '\0';
         tk.nome[n_nome] = '\0';
@@ -73,7 +74,18 @@ int inserir_eol_e_eof(AnaliseEstado* a) {
      * 3. Ao final, inserir EOL e depois TK_EOF se não existirem.
      * Usar função auxiliar 'inserir_token_na_posicao'
      */
-    if (a->total == 0) return 0;
+    if (a->total == 0) {
+         free(a->tokens);
+         a->tokens = NULL;
+        a->tokens = calloc(1, sizeof(Token));
+        if (!a->tokens) return -1;
+        a->capacidade = a->total = 1;
+        strcpy(a->tokens[0].nome, "TK_EOF");
+        strcpy(a->tokens[0].lexema, "EOF");
+        a->tokens[0].linha = 1;
+        a->tokens[0].coluna = 1;
+        return 0;
+    }
 
     int nova_cap = a->total * 2 + 10; // nova_cap = nova_capacidade
     Token* novo_vetor = malloc(sizeof(Token) * nova_cap);
@@ -85,12 +97,25 @@ int inserir_eol_e_eof(AnaliseEstado* a) {
     for (int i = 0; i < a->total; i++) {
         Token tk = a->tokens[i];
 
-        if (linha_anterior != -1 && tk.linha != linha_anterior) {
+        if (strcmp(tk.nome, "TK_EOF") == 0) {
+            if (novo_total > 0 &&
+                strcmp(novo_vetor[novo_total - 1].nome, "EOL") != 0) {
+                Token eol;
+                strcpy(eol.nome, "EOL");
+                strcpy(eol.lexema, "EOL");
+                eol.linha = novo_vetor[novo_total - 1].linha;
+                eol.coluna = novo_vetor[novo_total - 1].coluna +
+                             (int)strlen(novo_vetor[novo_total - 1].lexema);
+                novo_vetor[novo_total++] = eol;
+            }
+        } else if (linha_anterior != -1 && tk.linha != linha_anterior &&
+                   strcmp(novo_vetor[novo_total - 1].nome, "EOL") != 0) {
             Token eol;
             strcpy(eol.nome, "EOL");
             strcpy(eol.lexema, "EOL");
             eol.linha = linha_anterior;
-            eol.coluna = a->tokens[i-1].coluna + strlen(a->tokens[i-1].lexema);
+            eol.coluna = a->tokens[i-1].coluna +
+                         (int)strlen(a->tokens[i-1].lexema);
             novo_vetor[novo_total++] = eol;
         }
 
@@ -233,14 +258,30 @@ void adicionar_filho(NoArvore* pai, NoArvore* filho) {
 
 NoArvore* no_terminal(Token* t) {
     char buffer[256];
-    snprintf(buffer, sizeof(buffer), "%s\\n%s", t->nome, t->lexema);
+    snprintf(buffer, sizeof(buffer), "%s\n%s", t->nome, t->lexema);
     return novo_no(buffer);
 }
 
+static void emitir_rotulo_dot(FILE* out, const char* rotulo) {
+    for (const unsigned char* p = (const unsigned char*)rotulo; *p; p++) {
+        switch (*p) {
+            case '"': fputs("\\\"", out); break;
+            case '\\': fputs("\\\\", out); break;
+            case '\n': fputs("\\n", out); break;
+            case '\r': fputs("\\r", out); break;
+            case '\t': fputs("\\t", out); break;
+            default:
+                if (*p < 0x20) fprintf(out, "\\%03o", *p);
+                else fputc(*p, out);
+        }
+    }
+}
+
 void emitir_dot(FILE* out, NoArvore* no) {
-    // Percorrer em profundidade em imprimir nós e arestas
     if (!no) return;
-    fprintf(out, "  n%d [label=\"%s\"];\n", no->id, no->rotulo);
+    fprintf(out, "  n%d [label=\"", no->id);
+    emitir_rotulo_dot(out, no->rotulo);
+    fprintf(out, "\"];\n");
 
     NoArvore* filho = no->primeiro_filho;
     while (filho) {
@@ -257,24 +298,224 @@ void liberar_arvore(NoArvore *raiz) {
     free(raiz);
 }
 
-/*
- * Escrever as funções de análise sintática de não terminais
- */
+static NoArvore* novo_nao_terminal(const char* rotulo) {
+    return novo_no(rotulo);
+}
+
+static NoArvore* consumir_no(AnaliseEstado* a) {
+    Token* t = token_atual(a);
+    if (!t) return NULL;
+    NoArvore* no = no_terminal(t);
+    avancar(a);
+    return no;
+}
+
+static int eh_secao(AnaliseEstado* a) {
+    return verificar(a, "DIR_DATA") || verificar(a, "DIR_TEXT");
+}
+
+static int eh_diretiva_dados(AnaliseEstado* a) {
+    return verificar(a, "DIR_WORD") || verificar(a, "DIR_HALF") ||
+           verificar(a, "DIR_BYTE") || verificar(a, "DIR_ASCII") ||
+           verificar(a, "DIR_ASCIIZ") || verificar(a, "DIR_SPACE") ||
+           verificar(a, "DIR_ALIGN");
+}
+
+static int consumir_eol(AnaliseEstado* a, NoArvore* no) {
+    if (!verificar(a, "EOL")) {
+        erro(a, "EOL");
+        return 0;
+    }
+    adicionar_filho(no, consumir_no(a));
+    return 1;
+}
+
+NoArvore* analise_rotulo(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<rotulo>");
+    if (!verificar(a, "ID")) {
+        erro(a, "ID");
+        return no;
+    }
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COL")) {
+        erro(a, "SMB_COL(:)");
+        return no;
+    }
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_diretiva_global(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<diretiva_global>");
+    if (!verificar(a, "DIR_GLOBL")) {
+        erro(a, "DIR_GLOBL");
+        return no;
+    }
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "ID")) {
+        erro(a, "ID");
+        return no;
+    }
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_lista_inteiros(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<lista_inteiros>");
+    if (!verificar(a, "NUM_INT")) {
+        erro(a, "NUM_INT");
+        return no;
+    }
+    adicionar_filho(no, consumir_no(a));
+    while (verificar(a, "SMB_COM")) {
+        adicionar_filho(no, consumir_no(a));
+        if (!verificar(a, "NUM_INT")) {
+            erro(a, "NUM_INT após vírgula");
+            return no;
+        }
+        adicionar_filho(no, consumir_no(a));
+    }
+    return no;
+}
+
+NoArvore* analise_diretiva_dados(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<diretiva_dados>");
+    if (verificar(a, "DIR_WORD") || verificar(a, "DIR_HALF") ||
+        verificar(a, "DIR_BYTE")) {
+        adicionar_filho(no, consumir_no(a));
+        adicionar_filho(no, analise_lista_inteiros(a));
+    } else if (verificar(a, "DIR_ASCII") || verificar(a, "DIR_ASCIIZ")) {
+        adicionar_filho(no, consumir_no(a));
+        if (!verificar(a, "STRING")) {
+            erro(a, "STRING");
+            return no;
+        }
+        adicionar_filho(no, consumir_no(a));
+    } else if (verificar(a, "DIR_SPACE") || verificar(a, "DIR_ALIGN")) {
+        adicionar_filho(no, consumir_no(a));
+        if (!verificar(a, "NUM_INT")) {
+            erro(a, "NUM_INT");
+            return no;
+        }
+        adicionar_filho(no, consumir_no(a));
+    } else {
+        erro(a, "diretiva de dados");
+    }
+    return no;
+}
+
+NoArvore* analise_linha_dados(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<linha_dados>");
+    if (verificar(a, "ID")) {
+        adicionar_filho(no, analise_rotulo(a));
+        if (eh_diretiva_dados(a))
+            adicionar_filho(no, analise_diretiva_dados(a));
+    } else if (eh_diretiva_dados(a)) {
+        adicionar_filho(no, analise_diretiva_dados(a));
+    } else if (verificar(a, "DIR_GLOBL")) {
+        adicionar_filho(no, analise_diretiva_global(a));
+    } else {
+        erro(a, "rótulo, diretiva de dados ou .globl");
+        return no;
+    }
+    consumir_eol(a, no);
+    return no;
+}
+
+NoArvore* analise_linha_codigo(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<linha_codigo>");
+    if (verificar(a, "ID")) {
+        adicionar_filho(no, analise_rotulo(a));
+        if (verificar(a, "EOL")) {
+            consumir_eol(a, no);
+            return no;
+        }
+        Token* t = token_atual(a);
+        if (!t || strncmp(t->nome, "INS_", 4) != 0) {
+            erro(a, "instrução ou EOL após rótulo");
+            return no;
+        }
+    } else if (verificar(a, "DIR_GLOBL")) {
+        adicionar_filho(no, analise_diretiva_global(a));
+        consumir_eol(a, no);
+        return no;
+    } else if (verificar(a, "EOL")) {
+        consumir_eol(a, no);
+        return no;
+    } else {
+        Token* t = token_atual(a);
+        if (!t || strncmp(t->nome, "INS_", 4) != 0) {
+            erro(a, "rótulo, instrução ou .globl");
+            return no;
+        }
+    }
+
+    NoArvore* instrucao = novo_nao_terminal("<instrucao>");
+    while (token_atual(a) && !verificar(a, "EOL") &&
+           !verificar(a, "TK_EOF")) {
+        adicionar_filho(instrucao, consumir_no(a));
+    }
+    adicionar_filho(no, instrucao);
+    consumir_eol(a, no);
+    return no;
+}
+
+NoArvore* analise_secao_dados(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<secao_dados>");
+    adicionar_filho(no, consumir_no(a));
+    consumir_eol(a, no);
+    while (token_atual(a) && !eh_secao(a) && !verificar(a, "TK_EOF")) {
+        int posicao = a->atual;
+        int linha = token_atual(a)->linha;
+        adicionar_filho(no, analise_linha_dados(a));
+        Token* proximo = token_atual(a);
+        if (a->atual == posicao ||
+            (proximo && strcmp(proximo->nome, "TK_EOF") &&
+             proximo->linha <= linha)) {
+            sicronizar_erro(a);
+        }
+    }
+    return no;
+}
+
+NoArvore* analise_secao_codigo(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<secao_codigo>");
+    adicionar_filho(no, consumir_no(a));
+    consumir_eol(a, no);
+    while (token_atual(a) && !eh_secao(a) && !verificar(a, "TK_EOF")) {
+        int posicao = a->atual;
+        int linha = token_atual(a)->linha;
+        adicionar_filho(no, analise_linha_codigo(a));
+        Token* proximo = token_atual(a);
+        if (a->atual == posicao ||
+            (proximo && strcmp(proximo->nome, "TK_EOF") &&
+             proximo->linha <= linha)) {
+            sicronizar_erro(a);
+        }
+    }
+    return no;
+}
+
+NoArvore* analise_secao(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<secao>");
+    adicionar_filho(no, verificar(a, "DIR_DATA")
+        ? analise_secao_dados(a)
+        : analise_secao_codigo(a));
+    return no;
+}
 
 NoArvore* analise_programa(AnaliseEstado* a) {
-    NoArvore* no = novo_no("<programa>");
-
-    while (token_atual(a) && !verificar(a, "TK_EOF")) {
-        NoArvore* filho = no_terminal(token_atual(a));
-        adicionar_filho(no, filho);
-        avancar(a);
+    NoArvore* no = novo_nao_terminal("<programa>");
+    if (!eh_secao(a)) {
+        erro(a, "DIR_DATA ou DIR_TEXT no início do programa");
+        return no;
     }
-
-    if (token_atual(a)) {
-        adicionar_filho(no, no_terminal(token_atual(a)));
-        avancar(a);
-    }
-
+    while (eh_secao(a))
+        adicionar_filho(no, analise_secao(a));
+    if (verificar(a, "TK_EOF"))
+        adicionar_filho(no, consumir_no(a));
+    else
+        erro(a, "TK_EOF");
     return no;
 }
 
@@ -287,8 +528,12 @@ int AnaliseSintatica(FILE *tokens, FILE *arvore, FILE *erros) {
     a.arvore = arvore;
     a.erros = erros;
     a.atual = 0;
+    g_proximo_id = 0;
 
-    if (carregar_tokens(tokens, &a) != 0) return -1;
+    if (carregar_tokens(tokens, &a) != 0) {
+        liberar_tokens(&a);
+        return -1;
+    }
     if (inserir_eol_e_eof(&a) != 0) { liberar_tokens(&a); return -1; }
 
     NoArvore* raiz = analise_programa(&a);
