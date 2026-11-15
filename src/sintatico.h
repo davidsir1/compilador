@@ -58,6 +58,10 @@ void emitir_dot(FILE* out, NoArvore* raiz);
 
 void liberar_tokens(AnaliseEstado* a);
 
+NoArvore* novo_nao_terminal(const char* rotulo);
+
+NoArvore* consumir_no(AnaliseEstado* a);
+
 // Funções de anaĺise sintática não terminal
 NoArvore* analise_programa(AnaliseEstado* a);
 NoArvore* analise_secao(AnaliseEstado* a);

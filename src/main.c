@@ -27,12 +27,14 @@ int main (int argc, char* argv[]) {
     char nome_arquivo_dot[300];
     char nome_arquivo_lex[300];
     char nome_arquivo_err[300];
+    char nome_arquivo_lex_err[300];
 
     //trocar_extensao(argv[1], ".pre", nome_arquivo_pre, 300);
     snprintf(nome_arquivo_pre, sizeof(nome_arquivo_pre), "%s.pre", argv[2]);
     snprintf(nome_arquivo_lex, sizeof(nome_arquivo_lex), "%s.lex", argv[2]);
     snprintf(nome_arquivo_dot, sizeof(nome_arquivo_dot), "%s.dot", argv[2]);
     snprintf(nome_arquivo_err, sizeof(nome_arquivo_err), "%s.sin.err", argv[2]);
+    snprintf(nome_arquivo_lex_err, sizeof(nome_arquivo_lex_err), "%s.err", argv[2]);
 
     /*
      * Etapa de pré processamento
@@ -70,9 +72,14 @@ int main (int argc, char* argv[]) {
         return 1;
     }
 
-    int base = strlen(argv[2]);
-    if (base >= sizeof(nome_base_saida)) base = sizeof(nome_base_saida) - 1;
-    memcpy(nome_base_saida, argv[2], (int)strlen(argv[2]));
+    size_t base = strlen(argv[2]);
+    if (base >= sizeof(nome_base_saida)) {
+        fprintf(stderr, "Erro: o prefixo de saída é muito longo.\n");
+        fclose(saida_lex);
+        fclose(entrada_pre);
+        return 1;
+    }
+    memcpy(nome_base_saida, argv[2], base);
     nome_base_saida[base] = '\0';
 
     AnaliseLexica(entrada_pre, saida_lex);
@@ -97,16 +104,45 @@ int main (int argc, char* argv[]) {
     }
 
     FILE* saida_err = fopen(nome_arquivo_err, "w");
-    if (saida_dot == NULL) {
+    if (saida_err == NULL) {
         printf("Erro: falha na escrita do arquivo %s.\n", nome_arquivo_err);
+        fclose(saida_dot);
+        fclose(entrada_lex);
         return 1;
     }
 
-    AnaliseSintatica(entrada_lex, saida_dot, saida_err);
+    FILE* entrada_err_lex = fopen(nome_arquivo_lex_err, "r");
+    if (entrada_err_lex == NULL) {
+        printf("Erro: falha ao ler o arquivo %s.\n", nome_arquivo_lex_err);
+        fclose(saida_dot);
+        fclose(entrada_lex);
+        fclose(saida_err);
+        return 2;
+    }
+
+    int erro_lexico = 0;
+    char linha_err[512];
+    while (fgets(linha_err, sizeof(linha_err), entrada_err_lex)) {
+        if (strncmp(linha_err, "<ERRO_", 6) == 0) {
+            erro_lexico = 1;
+            break;
+        }
+    }
+    fclose(entrada_err_lex);
+
+    if (erro_lexico) {
+        fprintf(saida_err, "Análise sintática não executada: existem erros léxicos.\n");
+        fclose(saida_dot);
+        fclose(entrada_lex);
+        fclose(saida_err);
+        return 1;
+    }
+
+    int resultado = AnaliseSintatica(entrada_lex, saida_dot, saida_err);
 
     fclose(saida_dot);
     fclose(entrada_lex);
     fclose(saida_err);
 
-    return 0;
+    return resultado < 0 ? 2 : resultado;
 }
