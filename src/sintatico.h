@@ -76,5 +76,24 @@ NoArvore* analise_lista_inteiros(AnaliseEstado* a);
 NoArvore* analise_instrucao(AnaliseEstado* a);
 NoArvore* analise_diretiva_inteiros(AnaliseEstado* a);
 NoArvore* analise_diretiva_string(AnaliseEstado* a);
+NoArvore* analise_op_tres_registradores(AnaliseEstado* a);
+NoArvore* analise_instrucao_tres_registradores(AnaliseEstado* a);
+NoArvore* analise_op_dois_registradores(AnaliseEstado* a);
+NoArvore* analise_instrucao_dois_registradores(AnaliseEstado* a);
+NoArvore* analise_op_um_registrador(AnaliseEstado* a);
+NoArvore* analise_instrucao_um_registrador(AnaliseEstado* a);
+NoArvore* analise_instrucao_imediato(AnaliseEstado* a);
+NoArvore* analise_op_deslocamento(AnaliseEstado* a);
+NoArvore* analise_instrucao_deslocamento(AnaliseEstado* a);
+NoArvore* analise_instrucao_li(AnaliseEstado* a);
+NoArvore* analise_instrucao_la(AnaliseEstado* a);
+NoArvore* analise_op_memoria(AnaliseEstado* a);
+NoArvore* analise_endereco(AnaliseEstado* a);
+NoArvore* analise_instrucao_memoria(AnaliseEstado* a);
+NoArvore* analise_op_desvio(AnaliseEstado* a);
+NoArvore* analise_instrucao_desvio(AnaliseEstado* a);
+NoArvore* analise_op_salto(AnaliseEstado* a);
+NoArvore* analise_instrucao_salto(AnaliseEstado* a);
+NoArvore* analise_instrucao_sem_operando(AnaliseEstado* a);
 
 #endif // SINTATICO_H
