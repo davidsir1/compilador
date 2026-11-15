@@ -382,10 +382,10 @@ NoArvore* analise_diretiva_dados(AnaliseEstado* a) {
     NoArvore* no = novo_nao_terminal("<diretiva_dados>");
     if (verificar(a, "DIR_WORD") || verificar(a, "DIR_HALF") ||
         verificar(a, "DIR_BYTE")) {
-        adicionar_filho(no, consumir_no(a));
+        adicionar_filho(no, analise_diretiva_inteiros(a));
         adicionar_filho(no, analise_lista_inteiros(a));
     } else if (verificar(a, "DIR_ASCII") || verificar(a, "DIR_ASCIIZ")) {
-        adicionar_filho(no, consumir_no(a));
+        adicionar_filho(no, analise_diretiva_string(a));
         if (!verificar(a, "STRING")) {
             erro(a, "STRING");
             return no;
@@ -408,8 +408,15 @@ NoArvore* analise_linha_dados(AnaliseEstado* a) {
     NoArvore* no = novo_nao_terminal("<linha_dados>");
     if (verificar(a, "ID")) {
         adicionar_filho(no, analise_rotulo(a));
-        if (eh_diretiva_dados(a))
+        if (!verificar(a, "EOL") && !eh_diretiva_dados(a)) {
+            if (!a->houve_erro) {
+                erro(a, "diretiva de dados ou EOL");
+            }
+            return no;
+        }
+        if (eh_diretiva_dados(a)) {
             adicionar_filho(no, analise_diretiva_dados(a));
+        }
     } else if (eh_diretiva_dados(a)) {
         adicionar_filho(no, analise_diretiva_dados(a));
     } else if (verificar(a, "DIR_GLOBL")) {
@@ -516,6 +523,26 @@ NoArvore* analise_programa(AnaliseEstado* a) {
         adicionar_filho(no, consumir_no(a));
     else
         erro(a, "TK_EOF");
+    return no;
+}
+
+NoArvore* analise_diretiva_inteiros(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<diretiva_inteiros>");
+    if (verificar(a, "DIR_WORD") || verificar(a, "DIR_HALF") || verificar(a, "DIR_BYTE")) {
+        adicionar_filho(no, consumir_no(a));
+    } else {
+        erro(a, ".word, .half ou .byte");
+    }
+    return no;
+}
+
+NoArvore* analise_diretiva_string(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<diretiva_string>");
+    if (verificar(a, "DIR_ASCII") || verificar(a, "DIR_ASCIIZ")) {
+        adicionar_filho(no, consumir_no(a));
+    } else {
+        erro(a, ".ascii ou .asciiz");
+    }
     return no;
 }
 

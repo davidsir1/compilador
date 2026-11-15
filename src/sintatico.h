@@ -74,5 +74,7 @@ NoArvore* analise_diretiva_global(AnaliseEstado* a);
 NoArvore* analise_diretiva_dados(AnaliseEstado* a);
 NoArvore* analise_lista_inteiros(AnaliseEstado* a);
 NoArvore* analise_instrucao(AnaliseEstado* a);
+NoArvore* analise_diretiva_inteiros(AnaliseEstado* a);
+NoArvore* analise_diretiva_string(AnaliseEstado* a);
 
 #endif // SINTATICO_H
