@@ -34,7 +34,7 @@ int main (int argc, char* argv[]) {
     snprintf(nome_arquivo_lex, sizeof(nome_arquivo_lex), "%s.lex", argv[2]);
     snprintf(nome_arquivo_dot, sizeof(nome_arquivo_dot), "%s.dot", argv[2]);
     snprintf(nome_arquivo_err, sizeof(nome_arquivo_err), "%s.sin.err", argv[2]);
-    snprintf(nome_arquivo_lex_err, sizeof(nome_arquivo_lex_err), "%s.err", argv[2]);
+    snprintf(nome_arquivo_lex_err, sizeof(nome_arquivo_lex_err), "%s.lex.err", argv[2]);
 
     /*
      * Etapa de pré processamento
@@ -132,7 +132,7 @@ int main (int argc, char* argv[]) {
 
     if (erro_lexico) {
         fprintf(saida_err, "Análise sintática não executada: existem erros léxicos.\n");
-        printf("ANÁLISE SINTÁTICA NÃO EXECUTADA: EXISTEM ERROS LÉXICOS.");
+        printf("ANÁLISE SINTÁTICA NÃO EXECUTADA: EXISTEM ERROS LÉXICOS.\n");
         fclose(saida_dot);
         fclose(entrada_lex);
         fclose(saida_err);
@@ -141,15 +141,17 @@ int main (int argc, char* argv[]) {
 
     int resultado = AnaliseSintatica(entrada_lex, saida_dot, saida_err);
 
-    if (resultado == 0) {
-        printf("PROGRAMA SINTATICAMENTE VÁLIDO.");
-    } else {
-        printf("PROGRAMA SINTATICAMENTE INVÁLIDO.");
-    }
-
     fclose(saida_dot);
     fclose(entrada_lex);
     fclose(saida_err);
 
-    return resultado < 0 ? 2 : resultado;
+    if (resultado == 0) {
+        printf("PROGRAMA SINTATICAMENTE VÁLIDO.\n");
+        return 0;
+    } else if (resultado == 1) {
+        printf("PROGRAMA SINTATICAMENTE INVÁLIDO.\n");
+        return 1;
+    }
+
+    return 2;
 }

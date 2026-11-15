@@ -513,7 +513,7 @@ void AnaliseLexica(FILE *in, FILE *out) {
     char nome_ts[300], nome_err[300];
 
     snprintf(nome_ts, sizeof(nome_ts), "%s.ts", nome_base_saida);
-    snprintf(nome_err, sizeof(nome_err), "%s.err", nome_base_saida);
+    snprintf(nome_err, sizeof(nome_err), "%s.lex.err", nome_base_saida);
 
     FILE* saida_ts = fopen(nome_ts, "w");
     FILE* saida_err = fopen(nome_err, "w");
@@ -597,7 +597,7 @@ void AnaliseLexica(FILE *in, FILE *out) {
     fprintf(out, "<TK_EOF, EOF> %d %d\n", linha, coluna);
     imprimir_tabela(&ts, saida_ts);
 
-    if (!houve_erro) {
+    if (!g_houve_erro) {
         fprintf(saida_err, "Nenhum erro léxico encontrado.\n");
     }
 
