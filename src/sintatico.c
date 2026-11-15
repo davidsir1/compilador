@@ -75,8 +75,8 @@ int inserir_eol_e_eof(AnaliseEstado* a) {
      * Usar função auxiliar 'inserir_token_na_posicao'
      */
     if (a->total == 0) {
-         free(a->tokens);
-         a->tokens = NULL;
+        free(a->tokens);
+        a->tokens = NULL;
         a->tokens = calloc(1, sizeof(Token));
         if (!a->tokens) return -1;
         a->capacidade = a->total = 1;
@@ -271,7 +271,7 @@ static void emitir_rotulo_dot(FILE* out, const char* rotulo) {
             case '\r': fputs("\\r", out); break;
             case '\t': fputs("\\t", out); break;
             default:
-                if (*p < 0x20) fprintf(out, "\\%03o", *p);
+                if (*p < 32) fprintf(out, "\\%03o", *p);
                 else fputc(*p, out);
         }
     }
@@ -298,11 +298,11 @@ void liberar_arvore(NoArvore *raiz) {
     free(raiz);
 }
 
-static NoArvore* novo_nao_terminal(const char* rotulo) {
+NoArvore* novo_nao_terminal(const char* rotulo) {
     return novo_no(rotulo);
 }
 
-static NoArvore* consumir_no(AnaliseEstado* a) {
+NoArvore* consumir_no(AnaliseEstado* a) {
     Token* t = token_atual(a);
     if (!t) return NULL;
     NoArvore* no = no_terminal(t);
