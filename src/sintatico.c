@@ -485,9 +485,8 @@ NoArvore* analise_linha_codigo(AnaliseEstado* a) {
             erro(a, "instrução ou EOL após rótulo");
             return no;
         }
-        int erro_antes = a->houve_erro;
         adicionar_filho(no, analise_instrucao(a));
-        if (a->erro_linha) {
+        if (!a->erro_linha) {
             consumir_eol(a, no);
         }
         return no;
@@ -504,7 +503,7 @@ NoArvore* analise_linha_codigo(AnaliseEstado* a) {
             return no;
         }
         adicionar_filho(no, analise_instrucao(a));
-        if (a->erro_linha) {
+        if (!a->erro_linha) {
             consumir_eol(a, no);
         }
         return no;
@@ -523,7 +522,9 @@ NoArvore* analise_linha_codigo(AnaliseEstado* a) {
 NoArvore* analise_secao_dados(AnaliseEstado* a) {
     NoArvore* no = novo_nao_terminal("<secao_dados>");
     adicionar_filho(no, consumir_no(a));
-    consumir_eol(a, no);
+    if (!consumir_eol(a, no)) {
+        sicronizar_erro(a);
+    }
     while (token_atual(a) && !eh_secao(a) && !verificar(a, "TK_EOF")) {
         int posicao = a->atual;
         int linha = token_atual(a)->linha;
@@ -541,7 +542,9 @@ NoArvore* analise_secao_dados(AnaliseEstado* a) {
 NoArvore* analise_secao_codigo(AnaliseEstado* a) {
     NoArvore* no = novo_nao_terminal("<secao_codigo>");
     adicionar_filho(no, consumir_no(a));
-    consumir_eol(a, no);
+    if (!consumir_eol(a, no)) {
+        sicronizar_erro(a);
+    }
     while (token_atual(a) && !eh_secao(a) && !verificar(a, "TK_EOF")) {
         int posicao = a->atual;
         int linha = token_atual(a)->linha;
