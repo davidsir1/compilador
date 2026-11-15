@@ -141,6 +141,12 @@ int main (int argc, char* argv[]) {
 
     int resultado = AnaliseSintatica(entrada_lex, saida_dot, saida_err);
 
+    if (resultado == 0) {
+        printf("PROGRAMA SINTATICAMENTE VÁLIDO.");
+    } else {
+        printf("PROGRAMA SINTATICAMENTE INVÁLIDO.");
+    }
+
     fclose(saida_dot);
     fclose(entrada_lex);
     fclose(saida_err);
