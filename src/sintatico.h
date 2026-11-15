@@ -12,6 +12,7 @@ typedef struct {
     FILE* arvore; // arquivo .dot (NULL se for inválido)
     FILE* erros; // arquivo .sin.err
     int houve_erro; // 1 se houver erro sintático
+    int erro_linha;
 } AnaliseEstado;
 
 typedef struct NoArvore {
@@ -94,6 +95,6 @@ NoArvore* analise_op_desvio(AnaliseEstado* a);
 NoArvore* analise_instrucao_desvio(AnaliseEstado* a);
 NoArvore* analise_op_salto(AnaliseEstado* a);
 NoArvore* analise_instrucao_salto(AnaliseEstado* a);
-NoArvore* analise_instrucao_sem_operando(AnaliseEstado* a);
+NoArvore* analise_instrucao_sem_operandos(AnaliseEstado* a);
 
 #endif // SINTATICO_H

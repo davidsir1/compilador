@@ -203,6 +203,7 @@ int erro(AnaliseEstado* a, const char* esperado) {
     }
 
     a->houve_erro = 1;
+    a->erro_linha = 1;
     return 0;
 }
 
@@ -321,6 +322,43 @@ static int eh_diretiva_dados(AnaliseEstado* a) {
            verificar(a, "DIR_ALIGN");
 }
 
+static int eh_op_tres_registradores(AnaliseEstado* a) {
+    return verificar(a, "INS_ADD") || verificar(a, "INS_ADDU") || verificar(a, "INS_SUB")
+    || verificar(a, "INS_SUBU") || verificar(a, "INS_MUL") || verificar(a, "INS_AND")
+    || verificar(a, "INS_OR") || verificar(a, "INS_XOR") || verificar(a, "INS_NOR")
+    || verificar(a, "INS_SLT");
+}
+
+static int eh_op_dois_registradores(AnaliseEstado* a) {
+    return verificar(a, "INS_MOVE") || verificar(a, "INS_DIV");
+}
+
+static int eh_op_um_registrador(AnaliseEstado* a) {
+    return verificar(a, "INS_MFLO") || verificar(a, "INS_MFHI") || verificar(a, "INS_JR");
+}
+
+static int eh_op_deslocamento(AnaliseEstado* a) {
+    return verificar(a, "INS_SLL") || verificar(a, "INS_SRL");
+}
+
+static int eh_op_memoria(AnaliseEstado* a) {
+    return verificar(a, "INS_LW") || verificar(a, "INS_SW") || verificar(a, "INS_LB")
+    || verificar(a, "INS_SB") || verificar(a, "INS_LH") || verificar(a, "INS_SH");
+}
+
+static int eh_op_desvio(AnaliseEstado* a) {
+    return verificar(a, "INS_BEQ") || verificar(a, "INS_BNE") || verificar(a, "INS_BLT")
+    || verificar(a, "INS_BLE") || verificar(a, "INS_BGT") || verificar(a, "INS_BGE");
+}
+
+static int eh_op_salto(AnaliseEstado* a) {
+    return verificar(a, "INS_J") || verificar(a, "INS_JAL");
+}
+
+static int eh_instrucao_sem_operandos(AnaliseEstado* a) {
+    return verificar(a, "INS_SYSCALL") || verificar(a, "INS_NOP");
+}
+
 static int consumir_eol(AnaliseEstado* a, NoArvore* no) {
     if (!verificar(a, "EOL")) {
         erro(a, "EOL");
@@ -405,13 +443,11 @@ NoArvore* analise_diretiva_dados(AnaliseEstado* a) {
 }
 
 NoArvore* analise_linha_dados(AnaliseEstado* a) {
+    a->erro_linha = 0;
     NoArvore* no = novo_nao_terminal("<linha_dados>");
     if (verificar(a, "ID")) {
         adicionar_filho(no, analise_rotulo(a));
-        if (!verificar(a, "EOL") && !eh_diretiva_dados(a)) {
-            if (!a->houve_erro) {
-                erro(a, "diretiva de dados ou EOL");
-            }
+        if (a->erro_linha) {
             return no;
         }
         if (eh_diretiva_dados(a)) {
@@ -425,14 +461,21 @@ NoArvore* analise_linha_dados(AnaliseEstado* a) {
         erro(a, "rótulo, diretiva de dados ou .globl");
         return no;
     }
-    consumir_eol(a, no);
+
+    if (!a->erro_linha) {
+        consumir_eol(a, no);
+    }
     return no;
 }
 
 NoArvore* analise_linha_codigo(AnaliseEstado* a) {
+    a->erro_linha = 0;
     NoArvore* no = novo_nao_terminal("<linha_codigo>");
     if (verificar(a, "ID")) {
         adicionar_filho(no, analise_rotulo(a));
+        if (a->erro_linha) {
+            return no;
+        }
         if (verificar(a, "EOL")) {
             consumir_eol(a, no);
             return no;
@@ -442,12 +485,17 @@ NoArvore* analise_linha_codigo(AnaliseEstado* a) {
             erro(a, "instrução ou EOL após rótulo");
             return no;
         }
+        int erro_antes = a->houve_erro;
+        adicionar_filho(no, analise_instrucao(a));
+        if (a->erro_linha) {
+            consumir_eol(a, no);
+        }
+        return no;
     } else if (verificar(a, "DIR_GLOBL")) {
         adicionar_filho(no, analise_diretiva_global(a));
-        consumir_eol(a, no);
-        return no;
-    } else if (verificar(a, "EOL")) {
-        consumir_eol(a, no);
+        if (!a->erro_linha) {
+            consumir_eol(a, no);
+        }
         return no;
     } else {
         Token* t = token_atual(a);
@@ -455,6 +503,11 @@ NoArvore* analise_linha_codigo(AnaliseEstado* a) {
             erro(a, "rótulo, instrução ou .globl");
             return no;
         }
+        adicionar_filho(no, analise_instrucao(a));
+        if (a->erro_linha) {
+            consumir_eol(a, no);
+        }
+        return no;
     }
 
     NoArvore* instrucao = novo_nao_terminal("<instrucao>");
@@ -543,6 +596,380 @@ NoArvore* analise_diretiva_string(AnaliseEstado* a) {
     } else {
         erro(a, ".ascii ou .asciiz");
     }
+    return no;
+}
+
+NoArvore* analise_op_tres_registradores(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<op_tres_registradores>");
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_tres_registradores(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_tres_registradores>");
+
+    adicionar_filho(no, analise_op_tres_registradores(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_op_dois_registradores(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<op_dois_registradores>");
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_dois_registradores(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_dois_registradores>");
+
+    adicionar_filho(no, analise_op_dois_registradores(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if(!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_op_um_registrador(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<op_um_registrador>");
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_um_registrador(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_um_registrador>");
+
+    adicionar_filho(no, analise_op_um_registrador(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_imediato(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_imediato>");
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "NUM_INT")) {
+        erro(a, "NUM_INT");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_op_deslocamento(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<op_deslocamento>");
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_deslocamento(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_deslocamento>");
+
+    adicionar_filho(no, analise_op_deslocamento(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "NUM_INT")) {
+        erro(a, "NUM_INT");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_li(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_li>");
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "NUM_INT")) {
+        erro(a, "NUM_INT");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_la(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_la>");
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "ID")) {
+        erro(a, "ID");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_op_memoria(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<op_memoria>");
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_endereco(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<endereco>");
+
+    if (verificar(a, "ID")) {
+        adicionar_filho(no, consumir_no(a));
+    } else if (verificar(a, "NUM_INT")) {
+        adicionar_filho(no, consumir_no(a));
+        if (!verificar(a, "SMB_OPA")) {
+            erro(a, "SMB_OPA(\"(\")");
+            return no;
+        }
+        adicionar_filho(no, consumir_no(a));
+        if (!verificar(a, "REG")) {
+            erro(a, "REG");
+            return no;
+        }
+        adicionar_filho(no, consumir_no(a));
+        if (!verificar(a, "SMB_CPA")) {
+            erro(a, "SMB_CPA(\")\")");
+            return no;
+        }
+        adicionar_filho(no, consumir_no(a));
+    } else {
+        erro(a, "ID ou NUM_INT");
+    }
+
+    return no;
+}
+
+NoArvore* analise_instrucao_memoria(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_memoria>");
+    adicionar_filho(no, analise_op_memoria(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+    adicionar_filho(no, consumir_no(a));
+    adicionar_filho(no, analise_endereco(a));
+    return no;
+}
+
+NoArvore* analise_op_desvio(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<op_desvio>");
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_desvio(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_desvio>");
+
+    adicionar_filho(no, analise_op_desvio(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "REG")) {
+        erro(a, "REG");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "SMB_COM")) {
+        erro(a, "SMB_COM(\",\")");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    if (!verificar(a, "ID")) {
+        erro(a, "ID");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_op_salto(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<op_salto>");
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_salto(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_salto>");
+
+    adicionar_filho(no, analise_op_salto(a));
+    if (!verificar(a, "ID")) {
+        erro(a, "ID");
+        return no;
+    }
+
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao_sem_operandos(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao_sem_operandos>");
+    adicionar_filho(no, consumir_no(a));
+    return no;
+}
+
+NoArvore* analise_instrucao(AnaliseEstado* a) {
+    NoArvore* no = novo_nao_terminal("<instrucao>");
+    if (eh_op_tres_registradores(a)) {
+        adicionar_filho(no, analise_instrucao_tres_registradores(a));
+    } else if (eh_op_dois_registradores(a)) {
+        adicionar_filho(no, analise_instrucao_dois_registradores(a));
+    } else if (eh_op_um_registrador(a)) {
+        adicionar_filho(no, analise_instrucao_um_registrador(a));
+    } else if (verificar(a, "INS_ADDI")) {
+        adicionar_filho(no, analise_instrucao_imediato(a));
+    } else if (eh_op_deslocamento(a)) {
+        adicionar_filho(no, analise_instrucao_deslocamento(a));
+    } else if (verificar(a, "INS_LI")) {
+        adicionar_filho(no, analise_instrucao_li(a));
+    } else if (verificar(a, "INS_LA")) {
+        adicionar_filho(no, analise_instrucao_la(a));
+    } else if (eh_op_memoria(a)) {
+        adicionar_filho(no, analise_instrucao_memoria(a));
+    } else if (eh_op_desvio(a)) {
+        adicionar_filho(no, analise_instrucao_desvio(a));
+    } else if (eh_op_salto(a)) {
+        adicionar_filho(no, analise_instrucao_salto(a));
+    } else if (eh_instrucao_sem_operandos(a)) {
+        adicionar_filho(no, analise_instrucao_sem_operandos(a));
+    } else {
+        erro(a, "instrução válida");
+    }
+
     return no;
 }
 
