@@ -13,13 +13,13 @@ int main (int argc, char* argv[]) {
     if (argc == 1) {
         printf("Alerta: Voce nao passou argumentos.\n");
         printf("Uso: %s <arquivo_entrada.asm> <arquivo_saida>\n", argv[0]);
-        return 1;
+        return 2;
     } else if (argc == 2) {
         printf("Erro: Voce nao passou o arquivo de saida.\n");
-        return 1;
+        return 2;
     } else if (argc >= 4) {
         printf("Erro: limite de argumentos ultrapassado.\n");
-        return 1;
+        return 2;
     }
 
     // Nome de arquivos .pre, .lex, .dot e .sin.err
@@ -42,13 +42,13 @@ int main (int argc, char* argv[]) {
     FILE* entrada_asm = fopen(argv[1], "r");
     if (entrada_asm == NULL) {
         printf("Erro: falha em ler o arquivo %s\n.", argv[1]);
-        return 1;
+        return 2;
     }
 
     FILE* saida_pre = fopen(nome_arquivo_pre, "w");
     if (saida_pre == NULL) {
         printf("Erro: falha na escrita do arquivo %s.\n", nome_arquivo_pre);
-        return 1;
+        return 2;
     }
 
     PreProcessamento(entrada_asm, saida_pre); // Mudar a saida para o <arquivo_saida.pre>
@@ -63,13 +63,13 @@ int main (int argc, char* argv[]) {
     FILE* entrada_pre = fopen(nome_arquivo_pre, "r");
     if (entrada_pre == NULL) {
         printf("Erro: falha ao ler o arquivo %s.\n", nome_arquivo_pre);
-        return 1;
+        return 2;
     }
 
     FILE* saida_lex = fopen(nome_arquivo_lex, "w");
     if (saida_lex == NULL) {
         printf("Erro: falha na escrita do arquivo %s.\n", nome_arquivo_lex);
-        return 1;
+        return 2;
     }
 
     size_t base = strlen(argv[2]);
@@ -94,13 +94,13 @@ int main (int argc, char* argv[]) {
     FILE* saida_dot = fopen(nome_arquivo_dot, "w");
     if (saida_dot == NULL) {
         printf("Erro: falha na escrita do arquivo %s.\n", nome_arquivo_dot);
-        return 1;
+        return 2;
     }
 
     FILE* entrada_lex = fopen(nome_arquivo_lex, "r");
     if (entrada_lex == NULL) {
         printf("Erro: falha ao ler o arquivo %s.\n", nome_arquivo_lex);
-        return 1;
+        return 2;
     }
 
     FILE* saida_err = fopen(nome_arquivo_err, "w");
@@ -108,7 +108,7 @@ int main (int argc, char* argv[]) {
         printf("Erro: falha na escrita do arquivo %s.\n", nome_arquivo_err);
         fclose(saida_dot);
         fclose(entrada_lex);
-        return 1;
+        return 2;
     }
 
     FILE* entrada_err_lex = fopen(nome_arquivo_lex_err, "r");
@@ -132,6 +132,7 @@ int main (int argc, char* argv[]) {
 
     if (erro_lexico) {
         fprintf(saida_err, "Análise sintática não executada: existem erros léxicos.\n");
+        printf("ANÁLISE SINTÁTICA NÃO EXECUTADA: EXISTEM ERROS LÉXICOS.");
         fclose(saida_dot);
         fclose(entrada_lex);
         fclose(saida_err);
