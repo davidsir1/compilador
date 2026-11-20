@@ -207,7 +207,7 @@ int erro(AnaliseEstado* a, const char* esperado) {
     return 0;
 }
 
-void sicronizar_erro(AnaliseEstado *a) {
+void sicronizar_ate_eol(AnaliseEstado *a) {
     while (token_atual(a) != NULL) {
         if (verificar(a, "EOL")) {
             avancar(a); // consome EOL

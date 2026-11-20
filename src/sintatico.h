@@ -46,7 +46,7 @@ int consumir(AnaliseEstado* a, const char *nome);
 
 void trim(char* str);
 
-void sicronizar_erro(AnaliseEstado* a);
+void sicronizar_ate_eol(AnaliseEstado* a);
 
 // Funções da árvore sintática
 NoArvore* novo_no(const char* rotulo);
