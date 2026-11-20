@@ -523,7 +523,7 @@ NoArvore* analise_secao_dados(AnaliseEstado* a) {
     NoArvore* no = novo_nao_terminal("<secao_dados>");
     adicionar_filho(no, consumir_no(a));
     if (!consumir_eol(a, no)) {
-        sicronizar_erro(a);
+        sicronizar_ate_eol(a);
     }
     while (token_atual(a) && !eh_secao(a) && !verificar(a, "TK_EOF")) {
         int posicao = a->atual;
@@ -533,7 +533,7 @@ NoArvore* analise_secao_dados(AnaliseEstado* a) {
         if (a->atual == posicao ||
             (proximo && strcmp(proximo->nome, "TK_EOF") &&
              proximo->linha <= linha)) {
-            sicronizar_erro(a);
+            sicronizar_ate_eol(a);
         }
     }
     return no;
@@ -543,7 +543,7 @@ NoArvore* analise_secao_codigo(AnaliseEstado* a) {
     NoArvore* no = novo_nao_terminal("<secao_codigo>");
     adicionar_filho(no, consumir_no(a));
     if (!consumir_eol(a, no)) {
-        sicronizar_erro(a);
+        sicronizar_ate_eol(a);
     }
     while (token_atual(a) && !eh_secao(a) && !verificar(a, "TK_EOF")) {
         int posicao = a->atual;
@@ -553,7 +553,7 @@ NoArvore* analise_secao_codigo(AnaliseEstado* a) {
         if (a->atual == posicao ||
             (proximo && strcmp(proximo->nome, "TK_EOF") &&
              proximo->linha <= linha)) {
-            sicronizar_erro(a);
+            sicronizar_ate_eol(a);
         }
     }
     return no;
